@@ -1,6 +1,7 @@
 #ifndef __CONVOLUTION_3D_FFT_H__
 #define __CONVOLUTION_3D_FFT_H__
 
+#include "standardCUDAfunctions.h"
 
 //define constants
 typedef float imageType;//the kind sof images we are working with (you will need to recompile to work with other types)
@@ -44,20 +45,5 @@ NOTE: on a Tesla C2075 the maximum image size seems to be 1024 x  875 x 512 (in 
 WARNING: If imSize > 5*kernelSize the maximum relative error in the convolution is 2% (SO WE SACRIFICE PRECISION FOR MEMORY AND LITTLE SPEED UP)
 */
 //extern "C" __declspec(dllexport) void convolution3DfftCUDAInPlaceSaveMemory(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA);
-
-//----------------------------------functions to decide whhich GPU to use-------------------------------
-
-/*
-*/
-
-extern "C" int getCUDAcomputeCapabilityMinorVersion(int devCUDA);
-extern "C" int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
-
-/*
-*/
-extern "C" int getNumDevicesCUDA();
-//extern "C" __declspec(dllexport) char* getNameDeviceCUDA(int devCUDA);
-extern "C" void getNameDeviceCUDA(int devCUDA, char *name);
-extern "C" long long int getMemDeviceCUDA(int devCUDA);
 
 #endif //__CONVOLUTION_3D_FFT_H__
