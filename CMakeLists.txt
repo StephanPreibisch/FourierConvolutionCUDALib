@@ -3,6 +3,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # project name
 PROJECT(FourierConvolutionCUDALib CXX)
+if(NOT(${CMAKE_VERSION} VERSION_LESS "3.0.0"))
+cmake_policy(SET CMP0042 NEW)
+endif()
  
 # version number
 SET (FOURIERCONVOLUTIONCUDALIB_NAME "CUDA FOURIER CONVOLUTION LIBRARY")
@@ -75,9 +78,8 @@ IF(INCLUDE_CUDA)
 	    SET(CUDA_HOST_COMPILER "/usr/bin/llvm-g++")
 	    SET(CMAKE_CXX_COMPILER ${CUDA_HOST_COMPILER})
 	    SET(CMAKE_C_COMPILER "/usr/bin/llvm-gcc")
-	    #gcc-4.2 is quite old and usually does not support 
-	    STRING(REPLACE "${HOST_COMPILER_RELEASE_FLAGS}" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-	    STRING(REPLACE "${HOST_COMPILER_RELEASE_FLAGS}" "" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
+	    SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libstdc++")
+
 	    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 	  ELSE()
 	    MESSAGE(WARNING ">> unknown CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) or /usr/bin/llvm-g++-4.2 does not exist, cuda host compiler remains set to default")
