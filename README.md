@@ -11,4 +11,3 @@ ${COMMAND} ${FLAGS} -lcufft -lcuda ${OUTPUT_FLAG} ${OUTPUT_PREFIX} ${OUTPUT} ${I
 
 Now build the .so/.dll library and put it into the Fiji directory.
 
-NOTE: If you are compiling under Windows, you need to change all 'extern "C"' definitions to 'extern "C" __declspec(dllexport)' for all function calls in the convolution3Dfft.h and convolution3Dfft.cu.
