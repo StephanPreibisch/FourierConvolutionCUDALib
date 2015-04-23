@@ -15,6 +15,7 @@
 #endif
 //----------------------------------functions to decide whhich GPU to use-------------------------------
 
+FUNCTION_PREFIX int selectDeviceWithHighestComputeCapability();
 FUNCTION_PREFIX int getCUDAcomputeCapabilityMinorVersion(int devCUDA);
 FUNCTION_PREFIX int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
 FUNCTION_PREFIX int getNumDevicesCUDA();

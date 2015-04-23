@@ -9,6 +9,28 @@
 #include "standardCUDAfunctions.h"
 
 //==============================================
+int selectDeviceWithHighestComputeCapability() {
+
+  int numDevices = 0;
+  HANDLE_ERROR(cudaGetDeviceCount(&numDevices));
+  int computeCapability = 0;
+  int meta = 0;
+  int value = -1;
+  int major = 0;
+  int minor = 0;
+
+  for (short devIdx = 0; devIdx < numDevices; ++devIdx) {
+    cuDeviceComputeCapability(&major, &minor, devIdx);
+    meta = 10 * major + minor;
+    if (meta > computeCapability) {
+      computeCapability = meta;
+      value = devIdx;
+    }
+  }
+
+  return value;
+}
+
 int getCUDAcomputeCapabilityMajorVersion(int devCUDA)
 {
 	int major = 0, minor = 0;
