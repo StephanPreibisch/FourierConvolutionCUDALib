@@ -6,8 +6,8 @@
 #include <math.h>
 
 
-__device__ static const float PI_2 = 6.28318530717958620f;
-__device__ static const float PI_1 =  3.14159265358979310f;
+//__device__ static const float PI_2 = 6.28318530717958620f;
+//__device__ static const float PI_1 =  3.14159265358979310f;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Modulate Fourier image of padded data by Fourier image of padded kernel
@@ -49,7 +49,7 @@ __global__ void __launch_bounds__(MAX_THREADS_CUDA)  modulateAndNormalizeSubsamp
 	long long int offset = (long long int)blockDim.x * (long long int)gridDim.x;
 	int k_0,k_1,k_2;
 	int aux;
-	float auxExp, auxSin,auxCos;
+	//	float auxExp, auxSin,auxCos;
     while(i < datasize)
 	{
 		//for each dimension we need to access k_i*r_i  i=0, 1, 2
