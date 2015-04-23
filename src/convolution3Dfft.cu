@@ -3,8 +3,8 @@
 #include "cuda.h"
 #include "cufft.h"
 #include <iostream>
-#include <math.h>
-
+#include <cmath>
+#include <algorithm>
 
 //__device__ static const float PI_2 = 6.28318530717958620f;
 //__device__ static const float PI_1 =  3.14159265358979310f;
