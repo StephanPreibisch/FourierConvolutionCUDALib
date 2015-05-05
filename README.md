@@ -14,7 +14,15 @@ ${COMMAND} ${FLAGS} -lcufft -lcuda ${OUTPUT_FLAG} ${OUTPUT_PREFIX} ${OUTPUT} ${I
 
 Now build the .so/.dll library and put it into the Fiji directory.
 
-This build does not support unit tests.
+
+```bash
+$ cd 
+# build including tests
+$ cmake.exe -G "Visual Studio 12 2013 Win64" -DCMAKE_INSTALL_PREFIX=C:/msys64/home/steinbac/ftmp -DBOOST_LIBRARYDIR=C:/boost_1_58_0/msvc-12-x86_64/lib64-msvc-12.0 -DBOOST_ROOT=C:/boost_1_58_0/msvc-12-x86_64 ..
+$ cmake --build . --target ALL_BUILD
+$ ctest.exe
+$ cmake --build . --target install
+```
 
 OSX/Linux Build Instructions
 ----------------------------
