@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_CASE(trivial_convolve) {
 
   float* image = image_.data();
   std::vector<float> kernel(kernel_size_,0);
-
+  
   convolution3DfftCUDAInPlace(image, &image_dims_[0], 
 			      &kernel[0], &kernel_dims_[0],
                               selectDeviceWithHighestComputeCapability());
