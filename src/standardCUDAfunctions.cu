@@ -6,7 +6,8 @@
  */
 #include "book.h"
 #include "cuda.h"
-#include "standardCUDAfunctions.h"
+
+#include "convolution3Dfft.h"
 
 //==============================================
 int selectDeviceWithHighestComputeCapability() {

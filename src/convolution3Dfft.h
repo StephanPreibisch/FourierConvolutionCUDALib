@@ -1,11 +1,9 @@
 #ifndef __CONVOLUTION_3D_FFT_H__
 #define __CONVOLUTION_3D_FFT_H__
 
-#include "standardCUDAfunctions.h"
-
 #ifdef _WIN32
 //auto-generated macro file for MSVC libraries on Win7
-	#include "convolution3Dfft_Export.h"
+	#include "FourierConvolutionCUDALib_Export.h"
 	#define FUNCTION_PREFIX extern "C" FourierConvolutionCUDALib_EXPORT
 
 #else
@@ -56,5 +54,12 @@ NOTE: on a Tesla C2075 the maximum image size seems to be 1024 x  875 x 512 (in 
 WARNING: If imSize > 5*kernelSize the maximum relative error in the convolution is 2% (SO WE SACRIFICE PRECISION FOR MEMORY AND LITTLE SPEED UP)
 */
 //FUNCTION_PREFIX void convolution3DfftCUDAInPlaceSaveMemory(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA);
+
+FUNCTION_PREFIX int selectDeviceWithHighestComputeCapability();
+FUNCTION_PREFIX int getCUDAcomputeCapabilityMinorVersion(int devCUDA);
+FUNCTION_PREFIX int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
+FUNCTION_PREFIX int getNumDevicesCUDA();
+FUNCTION_PREFIX void getNameDeviceCUDA(int devCUDA, char *name);
+FUNCTION_PREFIX long long int getMemDeviceCUDA(int devCUDA);
 
 #endif //__CONVOLUTION_3D_FFT_H__
