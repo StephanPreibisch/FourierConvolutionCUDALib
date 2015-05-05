@@ -10,7 +10,7 @@ ENDIF()
 
 
 IF(CUDA_FOUND)
-
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-I${PROJECT_SOURCE_DIR}/src)
 
 
@@ -21,13 +21,13 @@ MESSAGE("[Win] compiler is ${CMAKE_CXX_COMPILER_ID}")
 MESSAGE("[Win] using Boost libraries ${Boost_LIBRARIES}")
 IF("${CMAKE_CXX_COMPILER_ID}" MATCHES MSVC)
 target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME}_static)
-set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "/I${PROJECT_SOURCE_DIR}/src")
+#set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "/I${PROJECT_SOURCE_DIR}/src")
 ELSE()
-target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME})
+target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME}_static)
 ENDIF()
 ELSE()
-target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME})
-set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-I${PROJECT_SOURCE_DIR}/src")
+target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME}_static)
+#set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-I${PROJECT_SOURCE_DIR}/src")
 ENDIF()
 
 ELSE(CUDA_FOUND)

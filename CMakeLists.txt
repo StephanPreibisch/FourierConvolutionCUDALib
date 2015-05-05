@@ -30,6 +30,12 @@ SET (FOURIERCONVOLUTIONCUDALIB_ID "${FOURIERCONVOLUTIONCUDALIB_VENDOR_ID}.${PROJ
 # trying to setup paths so this package can be picked up
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+      "Choose the type of build, options are: Debug Release
+RelWithDebInfo MinSizeRel."
+      FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
 
 # shared path is architecture independent for now, TODO extend this to lib/bin/include
 IF(UNIX)
@@ -102,6 +108,17 @@ IF(INCLUDE_CUDA)
     ELSE(CUDA_FOUND)
         MESSAGE(FATAL_ERROR ">> CUDA not found. Exiting ...")
     ENDIF(CUDA_FOUND)
+	
+	IF(WIN32)
+		IF(${CUDA_VERSION} VERSION_GREATER "7" OR ${CUDA_VERSION} VERSION_EQUAL "7")
+			IF(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+				message(FATAL_ERROR ">> CUDA version 7 (found version: ${CUDA_VERSION}) or higher does not support 32bit builds on Windows (found CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})")
+			ELSE()
+				message("[Windows] 64bit build detected, ${CMAKE_SIZEOF_VOID_P}")
+			ENDIF()
+		
+		ENDIF()
+	ENDIF(WIN32)
 ENDIF(INCLUDE_CUDA)
  
 
