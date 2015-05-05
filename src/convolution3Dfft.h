@@ -4,9 +4,14 @@
 #include "standardCUDAfunctions.h"
 
 #ifdef _WIN32
-#define FUNCTION_PREFIX extern "C" __declspec(dllexport)
+//auto-generated macro file for MSVC libraries on Win7
+	#include "convolution3Dfft_Export.h"
+	#define FUNCTION_PREFIX extern "C" FourierConvolutionCUDALib_EXPORT
+
 #else
-#define FUNCTION_PREFIX extern "C"
+
+	#define FUNCTION_PREFIX extern "C"
+	
 #endif
 
 //define constants
