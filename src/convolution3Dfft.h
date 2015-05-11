@@ -25,7 +25,10 @@ static const int dimsImage = 3;//so thing can be set at co0mpile time
 WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 NOTE: we assume kernel size is the same as image (it has been padded appropriately)
 */
-imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int devCUDA);
+FUNCTION_PREFIX imageType* convolution3DfftCUDA_test(imageType* im,
+								int* imDim,
+								imageType* kernel,
+								int devCUDA);
 
 
 /*
@@ -34,7 +37,11 @@ WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDi
 
 TODO: pad data with imSize+kernelSize-1 (kernelSize/2 on each side) to impose the boundary conditions that you want: mirror, zero, etc...). Look at conv2DFFT in the CUDA SDK examples
 */
-FUNCTION_PREFIX imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA);
+FUNCTION_PREFIX imageType* convolution3DfftCUDA(imageType* im,
+												int* imDim,
+												imageType* kernel,
+												int* kernelDim,
+												int devCUDA);
 
 
 /*

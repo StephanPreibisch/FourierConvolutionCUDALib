@@ -10,7 +10,7 @@
 #include "convolution3Dfft.h"
 
 //==============================================
-int selectDeviceWithHighestComputeCapability() {
+ int selectDeviceWithHighestComputeCapability() {
 
   int numDevices = 0;
   HANDLE_ERROR(cudaGetDeviceCount(&numDevices));
@@ -32,14 +32,15 @@ int selectDeviceWithHighestComputeCapability() {
   return value;
 }
 
-int getCUDAcomputeCapabilityMajorVersion(int devCUDA)
+ int getCUDAcomputeCapabilityMajorVersion(int devCUDA)
 {
 	int major = 0, minor = 0;
 	cuDeviceComputeCapability(&major, &minor,devCUDA);
 
 	return major;
 }
-int getCUDAcomputeCapabilityMinorVersion(int devCUDA)
+
+ int getCUDAcomputeCapabilityMinorVersion(int devCUDA)
 {
 	int major = 0, minor = 0;
 	cuDeviceComputeCapability(&major, &minor,devCUDA);
@@ -47,20 +48,22 @@ int getCUDAcomputeCapabilityMinorVersion(int devCUDA)
 	return minor;
 }
 
-int getNumDevicesCUDA()
+ int getNumDevicesCUDA()
 {
 	int count = 0;
 	HANDLE_ERROR(cudaGetDeviceCount ( &count ));
 	return count;
 }
-void getNameDeviceCUDA(int devCUDA, char* name)
+
+ void getNameDeviceCUDA(int devCUDA, char* name)
 {
 	cudaDeviceProp prop;
 	HANDLE_ERROR( cudaGetDeviceProperties(&prop, devCUDA));
 
 	memcpy(name,prop.name,sizeof(char)*256);
 }
-long long int getMemDeviceCUDA(int devCUDA)
+
+ long long int getMemDeviceCUDA(int devCUDA)
 {
 	cudaDeviceProp prop;
 	HANDLE_ERROR( cudaGetDeviceProperties(&prop, devCUDA));

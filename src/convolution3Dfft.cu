@@ -180,7 +180,10 @@ void writeOutCUDAfft(char* filename,imageType* fftCUDA,int* fftCUDAdims)
 
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
-imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int devCUDA)
+imageType* convolution3DfftCUDA_test(imageType* im,
+													 int* imDim,
+													 imageType* kernel,
+													 int devCUDA)
 {
 	imageType* convResult = NULL;
 	imageType* imCUDA = NULL;
@@ -255,7 +258,11 @@ imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int d
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 //NOTE: to avoid transferring a large padded kernel, since memcpy is a limiting factor 
-imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
+ imageType* convolution3DfftCUDA(imageType* im,
+													 int* imDim,
+													 imageType* kernel,
+													 int* kernelDim,
+													 int devCUDA)
 {
 	imageType* convResult = NULL;
 	imageType* imCUDA = NULL;
@@ -345,7 +352,7 @@ imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int* 
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 //NOTE: to avoid transferring a large padded kernel, since memcpy is a limiting factor 
-void convolution3DfftCUDAInPlace(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
+ void convolution3DfftCUDAInPlace(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
 {
 	imageType* imCUDA = NULL;
 	imageType* kernelCUDA = NULL;

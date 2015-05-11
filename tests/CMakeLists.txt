@@ -12,9 +12,11 @@ FIND_PACKAGE(CUDA)
 
 IF(CUDA_FOUND)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
+LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src) 
 
 CUDA_ADD_EXECUTABLE(test_gpu_convolve test_gpu_convolve.cpp image_stack_utils.cpp)
 target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME}_static)
+set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
 
 ELSE(CUDA_FOUND)
 MESSAGE(WARNING "Skipping GPU based tests, CUDA not found\!")
