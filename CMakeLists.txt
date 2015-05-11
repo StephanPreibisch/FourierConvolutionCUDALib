@@ -154,7 +154,7 @@ configure_file(fourierconvolutioncudalib-config-version.cmake.in
 
 # Install the fourierconvolutioncudalib-config.cmake and fourierconvolutioncudalib-config-version.cmake
 install(FILES
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/fourierconvolutioncudalib-config.cmake"
+  "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/fourierconvolutioncudalib-config.cmake"
   "${PROJECT_BINARY_DIR}/fourierconvolutioncudalib-config-version.cmake"
   DESTINATION "${INSTALL_SHARE_DIR}" COMPONENT dev)
 
