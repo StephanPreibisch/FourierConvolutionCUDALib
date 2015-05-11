@@ -15,8 +15,27 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
 LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src) 
 
 CUDA_ADD_EXECUTABLE(test_gpu_convolve test_gpu_convolve.cpp image_stack_utils.cpp)
-target_link_libraries(test_gpu_convolve ${BOOST_LIRBARIES} ${PROJECT_NAME}_static)
+
+IF(Boost_FOUND)
+target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
 set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+MESSAGE(">> static Boost UTF: ${Boost_LIBRARIES}")
+ELSE(Boost_FOUND)
+
+SET(Boost_USE_STATIC_LIBS OFF)
+SET(Boost_USE_MULTITHREADED ON)
+FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem unit_test_framework REQUIRED)
+IF(Boost_FOUND)
+MESSAGE(">> dynamic Boost UTF ${Boost_LIBRARIES}")
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}) 
+
+target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME})
+set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
+ELSE()
+MESSAGE(">> dynamic Boost UTF NOT FOUND")
+ENDIF()
+ENDIF(Boost_FOUND)
 
 ELSE(CUDA_FOUND)
 MESSAGE(WARNING "Skipping GPU based tests, CUDA not found\!")
