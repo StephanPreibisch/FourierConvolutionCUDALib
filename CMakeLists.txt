@@ -36,6 +36,7 @@ if(NOT CMAKE_BUILD_TYPE)
 RelWithDebInfo MinSizeRel."
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
+MESSAGE(">> Setting up ${CMAKE_BUILD_TYPE} build")
 
 # shared path is architecture independent for now, TODO extend this to lib/bin/include
 IF(UNIX)
@@ -63,12 +64,6 @@ foreach(p LIB INCLUDE SHARE)
     set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
   endif()
 endforeach()
-
-# set project build type
-IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-   SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-MESSAGE(">> Setting up ${CMAKE_BUILD_TYPE} build")
 
 #########################################################################################################
 ## CUDA related
