@@ -12,6 +12,7 @@
 	
 #endif
 
+
 //define constants
 typedef float imageType;//the kind sof images we are working with (you will need to recompile to work with other types)
 static const int MAX_THREADS_CUDA = 1024; //adjust it for your GPU. This is correct for a 2.0 architecture
