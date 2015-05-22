@@ -109,7 +109,7 @@ IF(INCLUDE_CUDA)
 			IF(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
 				message(FATAL_ERROR ">> CUDA version 7 or higher does not support 32bit builds on Windows (found CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})")
 			ELSE()
-				message("[Windows] 64bit build detected, ${CMAKE_SIZEOF_VOID_P}")
+				message(">> [Windows] 64bit build detected, size of void pointer ${CMAKE_SIZEOF_VOID_P}")
 			ENDIF()
 		
 		ENDIF()
@@ -128,7 +128,7 @@ ADD_SUBDIRECTORY(tests)
 enable_testing()
 include("CTestLists.txt")
 ELSE()
-MESSAGE(WARNING ">> Boost libraries not found, unable to compile tests (skipping them)")
+MESSAGE(">> Boost libraries not found, skipping building setting up tests")
 ENDIF()
 
 # Export the package for use from the build-tree
