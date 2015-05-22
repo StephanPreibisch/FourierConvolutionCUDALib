@@ -3,11 +3,11 @@
 #include "cuda.h"
 #include "cufft.h"
 #include <iostream>
-#include <math.h>
+#include <cmath>
+#include <algorithm>
 
-
-__device__ static const float PI_2 = 6.28318530717958620f;
-__device__ static const float PI_1 =  3.14159265358979310f;
+//__device__ static const float PI_2 = 6.28318530717958620f;
+//__device__ static const float PI_1 =  3.14159265358979310f;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Modulate Fourier image of padded data by Fourier image of padded kernel
@@ -49,7 +49,7 @@ __global__ void __launch_bounds__(MAX_THREADS_CUDA)  modulateAndNormalizeSubsamp
 	long long int offset = (long long int)blockDim.x * (long long int)gridDim.x;
 	int k_0,k_1,k_2;
 	int aux;
-	float auxExp, auxSin,auxCos;
+	//	float auxExp, auxSin,auxCos;
     while(i < datasize)
 	{
 		//for each dimension we need to access k_i*r_i  i=0, 1, 2
@@ -180,7 +180,10 @@ void writeOutCUDAfft(char* filename,imageType* fftCUDA,int* fftCUDAdims)
 
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
-imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int devCUDA)
+imageType* convolution3DfftCUDA_test(imageType* im,
+													 int* imDim,
+													 imageType* kernel,
+													 int devCUDA)
 {
 	imageType* convResult = NULL;
 	imageType* imCUDA = NULL;
@@ -255,7 +258,11 @@ imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int d
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 //NOTE: to avoid transferring a large padded kernel, since memcpy is a limiting factor 
-imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
+ imageType* convolution3DfftCUDA(imageType* im,
+													 int* imDim,
+													 imageType* kernel,
+													 int* kernelDim,
+													 int devCUDA)
 {
 	imageType* convResult = NULL;
 	imageType* imCUDA = NULL;
@@ -345,7 +352,7 @@ imageType* convolution3DfftCUDA(imageType* im,int* imDim,imageType* kernel,int* 
 //=====================================================================
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 //NOTE: to avoid transferring a large padded kernel, since memcpy is a limiting factor 
-void convolution3DfftCUDAInPlace(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
+ void convolution3DfftCUDAInPlace(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
 {
 	imageType* imCUDA = NULL;
 	imageType* kernelCUDA = NULL;

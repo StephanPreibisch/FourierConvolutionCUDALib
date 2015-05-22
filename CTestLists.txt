@@ -1,0 +1,10 @@
+# include(BoostTestTargets)
+# add_boost_test(Independent
+#  SOURCES
+#  test_Independent.cpp
+#  TESTS
+#  Independent_suite)
+
+
+add_test(NAME gpu_convolve COMMAND test_gpu_convolve)
+
