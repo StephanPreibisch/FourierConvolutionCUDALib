@@ -122,7 +122,7 @@ ENDIF(INCLUDE_CUDA)
 # add subdirectories
 ADD_SUBDIRECTORY(src)
 
-FIND_PACKAGE (Boost 1.42 COMPONENTS system filesystem unit_test_framework thread)
+FIND_PACKAGE (Boost 1.42 COMPONENTS system filesystem unit_test_framework thread QUIET)
 IF(Boost_FOUND)
 ADD_SUBDIRECTORY(tests)
 enable_testing()
