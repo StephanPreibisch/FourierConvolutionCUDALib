@@ -3,8 +3,8 @@ FourierConvolutionCUDALib
 
 Implementation of 3d non-separable convolution using CUDA &amp; FFT Convolution, originally implemented by Fernando Amat for our Nature Methods paper (http://www.nature.com/nmeth/journal/v11/n6/full/nmeth.2929.html).
 
-Windows Build Instructions
---------------------------
+Windows Build Instructions with NSight (Legacy)
+-----------------------------------------------
 
 To compile it under Windows, NSight available from the CUDA SDK is suggested. Clone this repository into your cuda-workspace directory. Then make a new shared library project with the same name as the directory.
 
@@ -13,6 +13,9 @@ Under Project > Properties > Build > Settings > Tool Settings > NVCC Linker add 
 ${COMMAND} ${FLAGS} -lcufft -lcuda ${OUTPUT_FLAG} ${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}
 
 Now build the .so/.dll library and put it into the Fiji directory.
+
+Windows Build Instructions with CMake
+-------------------------------------
 
 The cmake build system is also supported under Windows 7 64bit now!
 
@@ -44,6 +47,8 @@ $ make install
 
 Dependencies
 ------------
+
+As the package supports a cmake based build system, having cmake (version >=2.8) installed is recommended.
 
 The unit tests that come with the library require boost (version 1.42 or higher) to be available to the cmake build system. If cmake is unable to detect them, try:
 
