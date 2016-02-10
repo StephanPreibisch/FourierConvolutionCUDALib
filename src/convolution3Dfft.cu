@@ -259,10 +259,10 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 //WARNING: for cuFFT the fastest running index is z direction!!! so pos = z + imDim[2] * (y + imDim[1] * x)
 //NOTE: to avoid transferring a large padded kernel, since memcpy is a limiting factor 
  imageType* convolution3DfftCUDA(imageType* im,
-													 int* imDim,
-													 imageType* kernel,
-													 int* kernelDim,
-													 int devCUDA)
+				 int* imDim,
+				 imageType* kernel,
+				 int* kernelDim,
+				 int devCUDA)
 {
 	imageType* convResult = NULL;
 	imageType* imCUDA = NULL;

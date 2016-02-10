@@ -9,7 +9,7 @@
 
 
 BOOST_FIXTURE_TEST_SUITE(legacy_convolution,
-                         multiviewnative::default_3D_fixture)
+                         fourierconvolution::default_3D_fixture)
 
 BOOST_AUTO_TEST_CASE(trivial_convolve) {
 
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(trivial_convolve) {
 
 BOOST_AUTO_TEST_CASE(identity_convolve) {
 
-  using namespace multiviewnative;
+  using namespace fourierconvolution;
 
   float sum_expected = std::accumulate(
       image_.data(), image_.data() + image_.num_elements(), 0.f);
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(identity_convolve) {
 }
 
 BOOST_AUTO_TEST_CASE(horizontal_convolve) {
-  using namespace multiviewnative;
+  using namespace fourierconvolution;
 
   float sum_expected =
       std::accumulate(image_folded_by_horizontal_.data(),
@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(horizontal_convolve) {
 
 BOOST_AUTO_TEST_CASE(vertical_convolve) {
 
-  multiviewnative::zero_padd<multiviewnative::image_stack> padder(
+  fourierconvolution::zero_padd<fourierconvolution::image_stack> padder(
       image_.shape(), vertical_kernel_.shape());
-  multiviewnative::image_stack padded_image(padder.extents_,
+  fourierconvolution::image_stack padded_image(padder.extents_,
                                             image_.storage_order());
 
   padder.insert_at_offsets(image_, padded_image);
@@ -109,11 +109,11 @@ BOOST_AUTO_TEST_CASE(vertical_convolve) {
 
   image_ = padded_image
       [boost::indices
-           [multiviewnative::range(padder.offsets()[0],
+           [fourierconvolution::range(padder.offsets()[0],
                                    padder.offsets()[0] + image_dims_[0])]
-           [multiviewnative::range(padder.offsets()[1],
+           [fourierconvolution::range(padder.offsets()[1],
                                    padder.offsets()[1] + image_dims_[1])]
-           [multiviewnative::range(padder.offsets()[2],
+           [fourierconvolution::range(padder.offsets()[2],
                                    padder.offsets()[2] + image_dims_[2])]];
 
   float sum = std::accumulate(image_.data(),
@@ -123,9 +123,9 @@ BOOST_AUTO_TEST_CASE(vertical_convolve) {
 
 BOOST_AUTO_TEST_CASE(depth_convolve) {
 
-  multiviewnative::zero_padd<multiviewnative::image_stack> padder(
+  fourierconvolution::zero_padd<fourierconvolution::image_stack> padder(
       image_.shape(), depth_kernel_.shape());
-  multiviewnative::image_stack padded_image(padder.extents_,
+  fourierconvolution::image_stack padded_image(padder.extents_,
                                             image_.storage_order());
 
   padder.insert_at_offsets(image_, padded_image);
@@ -145,11 +145,11 @@ BOOST_AUTO_TEST_CASE(depth_convolve) {
 
   image_ = padded_image
       [boost::indices
-           [multiviewnative::range(padder.offsets()[0],
+           [fourierconvolution::range(padder.offsets()[0],
                                    padder.offsets()[0] + image_dims_[0])]
-           [multiviewnative::range(padder.offsets()[1],
+           [fourierconvolution::range(padder.offsets()[1],
                                    padder.offsets()[1] + image_dims_[1])]
-           [multiviewnative::range(padder.offsets()[2],
+           [fourierconvolution::range(padder.offsets()[2],
                                    padder.offsets()[2] + image_dims_[2])]];
 
   float sum = std::accumulate(image_.data(),
@@ -159,9 +159,9 @@ BOOST_AUTO_TEST_CASE(depth_convolve) {
 
 BOOST_AUTO_TEST_CASE(all1_convolve) {
 
-  multiviewnative::zero_padd<multiviewnative::image_stack> padder(
+  fourierconvolution::zero_padd<fourierconvolution::image_stack> padder(
       image_.shape(), all1_kernel_.shape());
-  multiviewnative::image_stack padded_image(padder.extents_,
+  fourierconvolution::image_stack padded_image(padder.extents_,
                                             image_.storage_order());
 
   padder.insert_at_offsets(image_, padded_image);
@@ -180,11 +180,11 @@ BOOST_AUTO_TEST_CASE(all1_convolve) {
 
   image_ = padded_image
       [boost::indices
-           [multiviewnative::range(padder.offsets()[0],
+           [fourierconvolution::range(padder.offsets()[0],
                                    padder.offsets()[0] + image_dims_[0])]
-           [multiviewnative::range(padder.offsets()[1],
+           [fourierconvolution::range(padder.offsets()[1],
                                    padder.offsets()[1] + image_dims_[1])]
-           [multiviewnative::range(padder.offsets()[2],
+           [fourierconvolution::range(padder.offsets()[2],
                                    padder.offsets()[2] + image_dims_[2])]];
 
   float sum = std::accumulate(image_.data(),
