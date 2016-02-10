@@ -4,7 +4,7 @@
 #include <iostream>
 #include "boost/multi_array.hpp"
 
-namespace multiviewnative {
+namespace fourierconvolution {
 
   typedef boost::multi_array<float, 3> image_stack;
   typedef boost::multi_array_ref<float, 3> image_stack_ref;
@@ -18,6 +18,7 @@ namespace multiviewnative {
   typedef boost::multi_array_types::index_range range;
   typedef boost::general_storage_order<3> storage;
 
+  
   std::ostream& operator<<(std::ostream&, const image_stack&);
 
   template <typename DimT, typename ODimT>

@@ -6,7 +6,7 @@
 #include <limits>
 #include "boost/multi_array.hpp"
 
-namespace multiviewnative {
+namespace fourierconvolution {
 
 
 template <typename outT>
@@ -147,7 +147,7 @@ struct zero_padd {
             _target.shape(), _target.shape() + OtherStackT::dimensionality,
             extents_.begin(), extents_.end()))
       throw std::runtime_error(
-          "multiviewnative::zero_padd::insert_at_offsets]\ttarget image stack "
+          "fourierconvolution::zero_padd::insert_at_offsets]\ttarget image stack "
           "is smaller or equal in size than source\n");
 
     image_stack_view subview_padded_image = _target

@@ -2,7 +2,7 @@
 #include <iomanip>
 #include "image_stack_utils.h"
 
-namespace multiviewnative {
+namespace fourierconvolution {
 
 /**
    \brief function to print an image_stack

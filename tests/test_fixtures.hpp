@@ -16,7 +16,7 @@
 #include "image_stack_utils.h"
 #include "test_algorithms.hpp"
 
-namespace multiviewnative {
+namespace fourierconvolution {
 
 template <unsigned short KernelDimSize = 3, unsigned ImageDimSize = 8>
 struct convolutionFixture3D {

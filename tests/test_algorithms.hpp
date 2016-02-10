@@ -4,7 +4,7 @@
 #include <vector>
 #include "image_stack_utils.h"
 
-namespace multiviewnative {
+namespace fourierconvolution {
 
 template <typename ImageStackT, typename DimT>
 void convolve(const ImageStackT& _image, const ImageStackT& _kernel,
