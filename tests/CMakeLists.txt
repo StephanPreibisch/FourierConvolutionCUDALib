@@ -16,6 +16,7 @@ LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src)
 
 CUDA_ADD_EXECUTABLE(test_gpu_convolve test_gpu_convolve.cpp image_stack_utils.cpp)
 CUDA_ADD_EXECUTABLE(test_gpu_memory_reach test_gpu_memory_reach.cpp image_stack_utils.cpp)
+CUDA_ADD_EXECUTABLE(test_how_cufft_works test_how_cufft_works.cu image_stack_utils.cpp)
 
 IF(Boost_FOUND)
 target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
@@ -23,6 +24,10 @@ set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-D${PROJECT_NA
 
 target_link_libraries(test_gpu_memory_reach ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
 set_target_properties(test_gpu_memory_reach PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+
+target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
+set_target_properties(test_how_cufft_works PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+
 
 MESSAGE(">> static Boost UTF: ${Boost_LIBRARIES}")
 ELSE(Boost_FOUND)
@@ -40,6 +45,9 @@ set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_D
 
 target_link_libraries(test_gpu_memory_reach ${Boost_LIBRARIES} ${PROJECT_NAME})
 set_target_properties(test_gpu_memory_reach PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
+
+target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} ${PROJECT_NAME})
+set_target_properties(test_how_cufft_works PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
 ELSE()
 MESSAGE(">> dynamic Boost UTF NOT FOUND")
 ENDIF()
