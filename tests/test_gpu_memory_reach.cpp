@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE(identity_convolve_512) {
   fc::image_stack padded_stack(padder.extents_, stack.storage_order());
   padder.insert_at_offsets(stack, padded_stack);
 
-  std::vector<int> int_s_shape(padder.extents_.begin(), padder.extents_.end());
-  std::vector<int> int_k_shape(k_shape.begin(), k_shape.end());
+  std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
+  std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
                               kernel.data(), &int_k_shape[0],
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(times_two_512) {
   fc::image_stack padded_stack(padder.extents_, stack.storage_order());
   padder.insert_at_offsets(stack, padded_stack);
 
-  std::vector<int> int_s_shape(padder.extents_.begin(), padder.extents_.end());
-  std::vector<int> int_k_shape(k_shape.begin(), k_shape.end());
+  std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
+  std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
 
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -186,8 +186,8 @@ BOOST_AUTO_TEST_CASE(times_two_128) {
   fc::image_stack padded_stack(padder.extents_, stack.storage_order());
   padder.insert_at_offsets(stack, padded_stack);
 
-  std::vector<int> int_s_shape(padder.extents_.begin(), padder.extents_.end());
-  std::vector<int> int_k_shape(k_shape.begin(), k_shape.end());
+  std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
+  std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
 
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(times_two_128) {
     BOOST_REQUIRE_MESSAGE(convolved.data()[i]==2*stack.data()[i], "convolved " << convolved.data()[i] << " not equal expected " << 2*stack.data()[i] << " at " << i );
 }
 
-BOOST_AUTO_TEST_CASE(times_two_128_tiny_kernel) {
+BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel) {
 
   //define input data
   std::vector<size_t> k_shape(3,3);
@@ -221,15 +221,16 @@ BOOST_AUTO_TEST_CASE(times_two_128_tiny_kernel) {
   std::fill(kernel.data(),kernel.data()+kernel.num_elements(),0);
   kernel[k_shape[fc::row_major::z]/2][k_shape[fc::row_major::y]/2][k_shape[fc::row_major::x]/2] = 2;
   std::fill(stack.data(),stack.data()+stack.num_elements(),42);
-
+  for( size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
 
   //create padded data and insert 
   fc::zero_padd<fc::image_stack> padder(stack.shape(), kernel.shape());
   fc::image_stack padded_stack(padder.extents_, stack.storage_order());
   padder.insert_at_offsets(stack, padded_stack);
 
-  std::vector<int> int_s_shape(padder.extents_.begin(), padder.extents_.end());
-  std::vector<int> int_k_shape(k_shape.begin(), k_shape.end());
+  std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
+  std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
 
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -246,9 +247,60 @@ BOOST_AUTO_TEST_CASE(times_two_128_tiny_kernel) {
   for(size_t i = 0;i<s_shape.size();++i)
     BOOST_REQUIRE_EQUAL(convolved.shape()[i],s_shape[i]);
 
-  for(size_t i = 0;i<stack.num_elements();++i)
-    BOOST_REQUIRE_MESSAGE(convolved.data()[i]==2*stack.data()[i], "convolved " << convolved.data()[i] << " not equal expected " << 2*stack.data()[i] << " at " << i );
+  for(size_t i = 0;i<stack.num_elements();++i){
+    double diff = convolved.data()[i]-i;
+    BOOST_CHECK_MESSAGE(std::abs(diff)<1e-2, "convolved " << convolved.data()[i] << " not equal expected " << 2*stack.data()[i] << " at " << i );
+  }
 }
 
+BOOST_AUTO_TEST_CASE(all_tiny) {
+
+  //define input data
+  std::vector<size_t> k_shape(3,3);
+  k_shape[fc::row_major::z] = 5;
+  std::vector<size_t> s_shape(3,16);
+
+  fc::image_stack kernel(k_shape);
+  fc::image_stack stack(s_shape);
+
+  std::fill(kernel.data(),kernel.data()+kernel.num_elements(),0);
+
+  size_t where_z = k_shape[fc::row_major::z]/2;
+  size_t where_y = k_shape[fc::row_major::y]/2;
+  size_t where_x = k_shape[fc::row_major::x]/2;
+  
+  kernel[where_z][where_y][where_x] = 1;
+  
+  for( size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  //create padded data and insert 
+  fc::zero_padd<fc::image_stack> padder(stack.shape(), kernel.shape());
+  fc::image_stack padded_stack(padder.extents_, stack.storage_order());
+  padder.insert_at_offsets(stack, padded_stack);
+
+  std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
+  std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
+
+  //do convolution
+  convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
+                              kernel.data(), &int_k_shape[0],
+                              selectDeviceWithHighestComputeCapability());
+
+  //extract stack from padded_stack
+  fc::image_stack convolved =   padded_stack
+    [boost::indices
+     [fc::range(padder.offsets()[fc::row_major::z], padder.offsets()[fc::row_major::z] + s_shape[fc::row_major::z])]
+     [fc::range(padder.offsets()[fc::row_major::y], padder.offsets()[fc::row_major::y] + s_shape[fc::row_major::y])]
+     [fc::range(padder.offsets()[fc::row_major::x], padder.offsets()[fc::row_major::x] + s_shape[fc::row_major::x])]];
+
+  for(size_t i = 0;i<s_shape.size();++i)
+    BOOST_REQUIRE_EQUAL(convolved.shape()[i],s_shape[i]);
+
+  for(size_t i = 0;i<stack.num_elements();++i){
+    double diff = convolved.data()[i]-stack.data()[i];
+    BOOST_REQUIRE_MESSAGE(std::abs(diff)<1e-2, "convolved " << convolved.data()[i] << " not equal expected " << 2*stack.data()[i] << " at " << i );
+  }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
