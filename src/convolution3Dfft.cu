@@ -2,11 +2,16 @@
 #include "book.h"
 #include "cuda.h"
 #include "cufft.h"
+
 #include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <numeric>
+
+#include "traits.hpp"
+namespace fc = fourierconvolution;
+
 //__device__ static const float PI_2 = 6.28318530717958620f;
 //__device__ static const float PI_1 =  3.14159265358979310f;
 
@@ -380,9 +385,9 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 
  void convolution3DfftCUDAInPlace(imageType* im,int* imDim,imageType* kernel,int* kernelDim,int devCUDA)
 {
-	imageType* imCUDA = NULL;
+	cufftComplex* imCUDA = NULL;
 	imageType* kernelCUDA = NULL;
-	imageType* kernelPaddedCUDA = NULL;
+	cufftComplex* kernelPaddedCUDA = NULL;
 	imageType* shifted_kernel = NULL;
 
 	cufftHandle fftPlanFwd, fftPlanInv;
@@ -390,27 +395,32 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	
 	HANDLE_ERROR( cudaSetDevice( devCUDA ) );
 
-	long long int imSize = 1;
-	long long int kernelSize = 1;
-	for(int ii=0;ii<dimsImage;ii++)
-	{
-		imSize *= (long long int) (imDim[ii]);
-		kernelSize *= (long long int) (kernelDim[ii]);
-	}
 
 	//size of the R2C transform in units of cuFFTComplex
 	//should be n_z*n_y*(|_n_x/2_| + 1)*2 = 2*(n_z*n_y*n_x + n_z*n_y)
-	std::vector<size_t> complex_shape(imDim,imDim+3);
-	complex_shape.front() /= 2;
-	complex_shape.front() += 1;
+	std::vector<size_t> kernel_shape(kernelDim,kernelDim+3);
+	std::vector<size_t> stack_shape(imDim,imDim+3);
+	std::vector<size_t> complex_shape(stack_shape);
+	complex_shape[fc::row_major::x] = (stack_shape[fc::row_major::x]/2) + 1;
+
+	const size_t size_krn = std::accumulate(kernel_shape.begin(),
+						kernel_shape.end(),
+						1,
+						std::multiplies<size_t>());
 	
-	const long long int size_fft_as_complex = std::accumulate(complex_shape.begin(), complex_shape.end(),
-								  1,
-								  std::multiplies<long long int>()); 
+	const size_t size_img = std::accumulate(stack_shape.begin(),
+						stack_shape.end(),
+						1,
+						std::multiplies<size_t>());
+	
+	const size_t size_fft_as_complex = std::accumulate(complex_shape.begin(),
+							   complex_shape.end(),
+							   1,
+							   std::multiplies<long long int>()); 
 
 	const long long int size_fft_as_byte = size_fft_as_complex*sizeof(cufftComplex); 
-	const long long int size_img_as_byte = imSize*sizeof(imageType);
-	const long long int size_krn_as_byte = kernelSize*sizeof(imageType); 
+	const long long int size_img_as_byte = size_img*sizeof(imageType); 
+	const long long int size_krn_as_byte = size_krn*sizeof(imageType); 
 	
 	HANDLE_ERROR( cudaMalloc( (void**)&(shifted_kernel), size_img_as_byte ) );
 	HANDLE_ERROR( cudaMemset( shifted_kernel, 0, size_img_as_byte ));
@@ -418,11 +428,12 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	HANDLE_ERROR( cudaMalloc( (void**)&(kernelCUDA), size_krn_as_byte ) );
 	HANDLE_ERROR( cudaMemcpy( kernelCUDA, kernel, size_krn_as_byte , cudaMemcpyHostToDevice ) );
 
-	int numThreads=std::min((long long int)MAX_THREADS_CUDA,
-				kernelSize);
+	int numThreads=std::min((size_t)MAX_THREADS_CUDA,
+				size_krn);
+	
 	numThreads = closest_multiplier(numThreads);
 	int numBlocks=std::min((long long int)MAX_BLOCKS_CUDA,
-			       (long long int)(kernelSize+(long long int)(numThreads-1))/((long long int)numThreads));
+			       (long long int)(size_krn+numThreads-1)/(numThreads));
 	fftShiftKernel<<<numBlocks,numThreads>>>(kernelCUDA,
 						 shifted_kernel,
 						 kernelDim[0],kernelDim[1],kernelDim[2],
@@ -436,36 +447,69 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	//allocate kernel memory in GPU
 	HANDLE_ERROR( cudaMalloc( (void**)&(kernelPaddedCUDA), size_fft_as_byte ) );
 	HANDLE_ERROR( cudaMemset( kernelPaddedCUDA, 0, size_fft_as_byte ));
-	
-	HANDLE_ERROR( cudaMemcpy( kernelPaddedCUDA ,
-				  shifted_kernel,
-				  size_img_as_byte , cudaMemcpyDeviceToDevice ) );
 
+	float* d_src = 0;
+	cufftComplex* d_dst = 0;
+	
+	for(size_t z = 0;z<stack_shape[fc::row_major::in_z];++z)
+	  for(size_t y = 0;y<stack_shape[fc::row_major::in_y];++y){
+	    size_t dst_line_offset = (z*complex_shape[fc::row_major::in_y]*complex_shape[fc::row_major::in_x])+ (y*complex_shape[fc::row_major::in_x]);
+	    d_dst = kernelPaddedCUDA+dst_line_offset;
+	
+	    size_t src_line_offset = (z*stack_shape[fc::row_major::in_y]*stack_shape[fc::row_major::in_x])+ (y*stack_shape[fc::row_major::in_x]);
+	    d_src = shifted_kernel + src_line_offset;
+	
+	    HANDLE_ERROR( cudaMemcpy( d_dst ,
+				      d_src,
+				      stack_shape[fc::row_major::in_x]*sizeof(imageType),
+				      cudaMemcpyDeviceToDevice ) );
+	  }
+	
 
 	//make sure GPU finishes 
 	HANDLE_ERROR(cudaDeviceSynchronize());
 	HANDLE_ERROR( cudaFree( shifted_kernel ));shifted_kernel=NULL;
 
-	
 	HANDLE_ERROR( cudaMalloc( (void**)&(imCUDA), size_fft_as_byte ) );
-	HANDLE_ERROR( cudaMemcpy( imCUDA, im, size_img_as_byte , cudaMemcpyHostToDevice ) );
+
+	std::vector<cufftComplex> padded_image(size_fft_as_complex);
+
+	float* src_begin = 0;
+	cufftComplex* dst_begin = 0;
+	
+	for(size_t z = 0;z<stack_shape[fc::row_major::in_z];++z)
+	  for(size_t y = 0;y<stack_shape[fc::row_major::in_y];++y){
+	    size_t dst_line_offset = (z*complex_shape[fc::row_major::in_y]*complex_shape[fc::row_major::in_x])+ (y*complex_shape[fc::row_major::in_x]);
+	    dst_begin = &padded_image[0]+(dst_line_offset);
+	
+	    size_t src_line_offset = (z*stack_shape[fc::row_major::in_y]*stack_shape[fc::row_major::in_x])+ (y*stack_shape[fc::row_major::in_x]);
+	    src_begin = im + src_line_offset;
+
+	    std::copy(src_begin,src_begin + stack_shape[fc::row_major::in_x],(float*)dst_begin);
+	    
+	  }
+
+	HANDLE_ERROR( cudaMemcpy( imCUDA ,
+				  &padded_image[0],
+				  size_fft_as_byte,
+				  cudaMemcpyHostToDevice ) );
 
 	
 	cufftPlan3d(&fftPlanFwd, imDim[0], imDim[1], imDim[2], CUFFT_R2C);HANDLE_ERROR_KERNEL;
 	//TODO: is this needed only cuda 6 or earlier
 	//cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_NATIVE);HANDLE_ERROR_KERNEL; 
 	
-	cufftExecR2C(fftPlanFwd, imCUDA, (cufftComplex *)imCUDA);HANDLE_ERROR_KERNEL;
+	cufftExecR2C(fftPlanFwd, (cufftReal *)imCUDA, imCUDA);HANDLE_ERROR_KERNEL;
 	//transforming image
-	cufftExecR2C(fftPlanFwd, kernelPaddedCUDA, (cufftComplex *)kernelPaddedCUDA);HANDLE_ERROR_KERNEL;
+	cufftExecR2C(fftPlanFwd, (cufftReal *)kernelPaddedCUDA, kernelPaddedCUDA);HANDLE_ERROR_KERNEL;
 
-	numThreads=std::min((long long int)MAX_THREADS_CUDA,size_fft_as_complex);
-	long long int chunking = (size_fft_as_complex-1+(long long int)(numThreads))/((long long int)numThreads);
+	numThreads=std::min((size_t)MAX_THREADS_CUDA,size_fft_as_complex);
+	long long int chunking = (size_fft_as_complex-1+numThreads)/(numThreads);
 	numBlocks=std::min((long long int)MAX_BLOCKS_CUDA,
 			   chunking);
-	const float scale = 1.0f/(float)(imSize);
-	modulateAndNormalize_kernel<<<numBlocks,numThreads>>>((cufftComplex *)imCUDA,
-							      (cufftComplex *)kernelPaddedCUDA,
+	const float scale = 1.0f/(float)(size_img);
+	modulateAndNormalize_kernel<<<numBlocks,numThreads>>>(imCUDA,
+							      kernelPaddedCUDA,
 							      size_fft_as_complex, //size imCUDA
 							      scale // scale
 							      );HANDLE_ERROR_KERNEL;//last parameter is the size of the FFT
@@ -480,17 +524,36 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	//TODO: check if this is needed with CUDA 6.*
 	// cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_NATIVE);HANDLE_ERROR_KERNEL;
 	
-	cufftExecC2R(fftPlanInv, (cufftComplex *)imCUDA, imCUDA);HANDLE_ERROR_KERNEL;
+	cufftExecC2R(fftPlanInv, imCUDA, (cufftReal *)imCUDA);HANDLE_ERROR_KERNEL;
 	
 
 	//copy result to host and overwrite image
-	HANDLE_ERROR(cudaMemcpy(im,
+	HANDLE_ERROR(cudaMemcpy(&padded_image[0],
 				imCUDA,
-				size_img_as_byte,
+				size_fft_as_byte,
 				cudaMemcpyDeviceToHost));
+
+
 	//release memory
 	( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
 	HANDLE_ERROR( cudaFree( imCUDA));
+
+	float* complex_begin = 0;
+	float* real_begin = 0;
+
+	//get the right pixel lines again
+	for(size_t z = 0;z<stack_shape[fc::row_major::in_z];++z)
+	  for(size_t y = 0;y<stack_shape[fc::row_major::in_y];++y){
+	    size_t dst_line_offset = (z*stack_shape[fc::row_major::in_y]*stack_shape[fc::row_major::in_x])+ (y*stack_shape[fc::row_major::in_x]);
+	    real_begin = &im[0]+dst_line_offset;
 	
+	    size_t src_line_offset = (z*complex_shape[fc::row_major::in_y]*complex_shape[fc::row_major::in_x])+ (y*complex_shape[fc::row_major::in_x]);
+	    complex_begin = (float*)(&padded_image[0] + (src_line_offset));
+
+	    std::copy(complex_begin,complex_begin + stack_shape[fc::row_major::in_x],real_begin);
+	    
+	  }
+	
+		
 }
 

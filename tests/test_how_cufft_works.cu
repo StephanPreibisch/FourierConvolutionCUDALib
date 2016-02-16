@@ -9,28 +9,13 @@
 #include <vector>
 
 #include "image_stack_utils.h"
-
+#include "traits.hpp"
 #include "book.h"
 #include "cufft.h"
 
 namespace fourierconvolution {
 
-  struct row_major {
-
-    const static size_t x = 2;
-    const static size_t y = 1;
-    const static size_t z = 0;
-
-    const static size_t w = x;
-    const static size_t h = y;
-    const static size_t d = z;
-
-    const static size_t in_x = x;
-    const static size_t in_y = y;
-    const static size_t in_z = z;
-
-  };
-
+  
   __global__ void scale(cufftComplex* _array, size_t _size, float _scale){
 
     size_t tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -47,6 +32,7 @@ namespace fourierconvolution {
 
   void inplace_fft_ifft(image_stack& _stack){
 
+    
     typedef boost::multi_array<cufftComplex,3> frequ_stack;
     
     const size_t img_size = _stack.num_elements();
@@ -85,6 +71,9 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
+    if(CUDART_VERSION < 6050)
+      cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING);
+
     cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     cufftExecR2C(fftPlanFwd, (cufftReal*)d_stack, (cufftComplex *)d_stack);HANDLE_ERROR_KERNEL;
     ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
@@ -97,6 +86,9 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
+    if(CUDART_VERSION < 6050)
+      cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING);
+
     cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
     cufftExecC2R(fftPlanInv, (cufftComplex*)d_stack, (cufftReal *)d_stack);HANDLE_ERROR_KERNEL;
     ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
@@ -148,6 +140,8 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
+    if(CUDART_VERSION < 6050)
+      cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING);
     cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     cufftExecR2C(fftPlanFwd, d_real, d_complex);HANDLE_ERROR_KERNEL;
 
@@ -159,6 +153,8 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
+    if(CUDART_VERSION < 6050)
+      cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING);
     cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
     cufftExecC2R(fftPlanInv, d_complex, d_real);HANDLE_ERROR_KERNEL;
   

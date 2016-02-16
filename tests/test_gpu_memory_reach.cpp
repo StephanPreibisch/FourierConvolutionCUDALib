@@ -5,24 +5,11 @@
 #include <numeric>
 #include <vector>
 
+#include "traits.hpp"
 #include "padd_utils.h"
 #include "image_stack_utils.h"
 #include "convolution3Dfft.h"
 
-namespace fourierconvolution {
-
-  struct row_major {
-
-    const static size_t x = 2;
-    const static size_t y = 1;
-    const static size_t z = 0;
-
-    const static size_t w = x;
-    const static size_t h = y;
-    const static size_t d = z;
-  };
-
-};
 
 namespace fc = fourierconvolution;
 
