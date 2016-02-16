@@ -1,6 +1,9 @@
 #define BOOST_TEST_MODULE HOW_CUFFT_WORKS
 #include "boost/test/unit_test.hpp"
 
+#ifndef FC_TRACE_LEVEL
+#define FC_TRACE_LEVEL false
+#endif
 
 #include <numeric>
 #include <vector>
@@ -23,6 +26,116 @@ namespace fourierconvolution {
     const static size_t d = z;
   };
 
+  __global__ void scale(cufftComplex* _array, size_t _size, float _scale){
+
+    size_t tid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    cufftComplex el;
+    if(tid<_size){
+      el = _array[tid];
+      _array[tid].x = el.x*_scale;
+      _array[tid].y = el.y*_scale;
+    }
+      
+
+  }
+
+  void inplace_fft_ifft(image_stack& _stack){
+
+    const size_t img_size = _stack.num_elements();
+    std::vector<size_t> shape(_stack.shape(),_stack.shape() + image_stack::dimensionality);
+    
+    BOOST_REQUIRE(img_size > 32);
+  
+    std::vector<size_t> shape_for_cufft(shape);
+    shape_for_cufft[row_major::x] = (shape[row_major::x]/2) + 1;
+    const size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
+  
+    cufftComplex* d_stack = 0;
+  
+    HANDLE_ERROR( cudaMalloc( (void**)&(d_stack), size_for_cufft*sizeof(cufftComplex) ) );
+    HANDLE_ERROR( cudaMemset( d_stack, 0, size_for_cufft*sizeof(cufftComplex) ));
+    HANDLE_ERROR( cudaMemcpy( d_stack, _stack.data(), img_size*sizeof(float) , cudaMemcpyHostToDevice ) );
+
+    //FORWARD
+    cufftHandle fftPlanFwd;
+    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
+    cufftExecR2C(fftPlanFwd, (cufftReal*)d_stack, (cufftComplex *)d_stack);HANDLE_ERROR_KERNEL;
+    ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
+
+    //apply scale
+    const float scale_ = 1.f/float(img_size);
+    unsigned threads = 32;
+    unsigned blocks = (size_for_cufft + threads -1) /threads;
+    scale<<<blocks,threads>>>(d_stack,size_for_cufft,scale_);
+  
+    //BACKWARD
+    cufftHandle fftPlanInv;
+    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
+    cufftExecC2R(fftPlanInv, (cufftComplex*)d_stack, (cufftReal *)d_stack);HANDLE_ERROR_KERNEL;
+    ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
+  
+    image_stack received(shape);
+    std::fill(received.data(),received.data()+img_size,0);
+    HANDLE_ERROR( cudaMemcpy( received.data(), d_stack , img_size*sizeof(float) , cudaMemcpyDeviceToHost ) );
+    HANDLE_ERROR( cudaFree( d_stack));
+
+    std::copy(received.data(),received.data()+img_size,_stack.data());
+
+    return;
+  }
+  
+  void outofplace_fft_ifft(const image_stack& _input,  image_stack& _output){
+
+    
+    std::vector<size_t> shape(_input.shape(),_input.shape() + 3);
+    const size_t stack_size = _input.num_elements();
+
+    if(_output.num_elements()!=stack_size)
+      _output.resize(shape);
+    
+    std::fill(_output.data(),_output.data()+stack_size,0);
+    
+    std::vector<size_t> shape_for_cufft(shape);
+    shape_for_cufft[row_major::x] = (shape[row_major::x]/2) + 1;
+    size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
+  
+    cufftComplex* d_complex = 0;
+    cufftReal* d_real = 0;
+  
+    HANDLE_ERROR( cudaMalloc( (void**)&(d_complex), size_for_cufft*sizeof(cufftComplex) ) );
+    HANDLE_ERROR( cudaMemset( d_complex, 0, size_for_cufft*sizeof(cufftComplex) ));
+
+    HANDLE_ERROR( cudaMalloc( (void**)&(d_real), stack_size*sizeof(cufftComplex) ) );
+    HANDLE_ERROR( cudaMemcpy( d_real, _input.data(), stack_size*sizeof(float) , cudaMemcpyHostToDevice ) );
+
+    //FORWARD
+    cufftHandle fftPlanFwd;
+    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
+    cufftExecR2C(fftPlanFwd, d_real, d_complex);HANDLE_ERROR_KERNEL;
+
+    //apply scale
+    const float scale_ = 1.f/float(stack_size);
+    unsigned threads = 32;
+    unsigned blocks = (size_for_cufft + threads -1) /threads;
+    scale<<<blocks,threads>>>(d_complex,size_for_cufft,scale_);
+  
+    //BACKWARD
+    cufftHandle fftPlanInv;
+    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
+    cufftExecC2R(fftPlanInv, d_complex, d_real);HANDLE_ERROR_KERNEL;
+  
+    std::fill(_output.data(),_output.data()+stack_size,0);
+    HANDLE_ERROR( cudaMemcpy( _output.data(), d_real , stack_size*sizeof(float) , cudaMemcpyDeviceToHost ) );
+
+    ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
+    ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
+
+    HANDLE_ERROR( cudaFree( d_real));
+    HANDLE_ERROR( cudaFree( d_complex));
+  
+  }
+  
 };
 
 namespace fc = fourierconvolution;
@@ -37,6 +150,19 @@ struct set_to_float {
   }
   
 };
+
+template<typename in_type, typename out_type = in_type>
+struct diff_squared {
+
+  out_type operator()(const in_type& _first, const in_type& _second){
+
+    out_type value = _first - _second;
+    return (value*value);
+    
+  }
+  
+};
+
 
 
 struct ramp
@@ -75,29 +201,99 @@ struct stack_fixture {
   
 };
 
-__global__ void scale(cufftComplex* _array, size_t _size, float _scale){
 
-  size_t tid = blockDim.x * blockIdx.x + threadIdx.x;
 
-  cufftComplex el;
-  if(tid<_size){
-    el = _array[tid];
-    _array[tid].x = el.x*_scale;
-    _array[tid].y = el.y*_scale;
+BOOST_AUTO_TEST_SUITE(inplace)
+
+BOOST_AUTO_TEST_CASE(power_of_2) {
+
+  std::vector<size_t> shape(3,16);
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + stack.num_elements(),
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
   }
-      
-
+  
+  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  
+  
 }
 
-BOOST_AUTO_TEST_SUITE(fft_ifft)
+BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_CASE(inplace_returns_equal) {
+BOOST_AUTO_TEST_SUITE(outofplace)
+
+BOOST_AUTO_TEST_CASE(of_prime_shape) {
 
   std::vector<size_t> shape(3,17);
   shape[fc::row_major::z] = 13;
   shape[fc::row_major::x] = 19;
 
   fc::image_stack stack(shape);
+  fc::image_stack received(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  size_t img_size = std::accumulate(shape.begin(), shape.end(),1,std::multiplies<size_t>());
+
+  BOOST_REQUIRE(img_size > 32);
+
+  fc::outofplace_fft_ifft(stack, received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + img_size,
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+
+}
+
+BOOST_AUTO_TEST_CASE(power_of_2_shape) {
+
+  std::vector<size_t> shape(3,16);
+
+  fc::image_stack stack(shape);
+  fc::image_stack received(shape);
 
   for(size_t i = 0;i<stack.num_elements();++i)
     stack.data()[i] = i;
@@ -106,53 +302,39 @@ BOOST_AUTO_TEST_CASE(inplace_returns_equal) {
 
   BOOST_REQUIRE(img_size > 32);
   
-  std::vector<size_t> shape_for_cufft(shape);
-  shape_for_cufft[fc::row_major::x] = (shape[fc::row_major::x]/2) + 1;
-  size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
-  
-  cufftComplex* d_stack = 0;
-  
-  HANDLE_ERROR( cudaMalloc( (void**)&(d_stack), size_for_cufft*sizeof(cufftComplex) ) );
-  HANDLE_ERROR( cudaMemset( d_stack, 0, size_for_cufft*sizeof(cufftComplex) ));
-  HANDLE_ERROR( cudaMemcpy( d_stack, stack.data(), img_size*sizeof(float) , cudaMemcpyHostToDevice ) );
+  fc::outofplace_fft_ifft(stack, received);
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + img_size,
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float>()
+				     );
+  l2norm /= stack.num_elements();
 
-  //FORWARD
-  cufftHandle fftPlanFwd;
-  cufftPlan3d(&fftPlanFwd, shape[fc::row_major::x], shape[fc::row_major::y], shape[fc::row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
-  cufftExecR2C(fftPlanFwd, (cufftReal*)d_stack, (cufftComplex *)d_stack);HANDLE_ERROR_KERNEL;
-  ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
-
-  //apply scale
-  const float scale_ = 1.f/float(img_size);
-  unsigned threads = 32;
-  unsigned blocks = (size_for_cufft + threads -1) /threads;
-  scale<<<blocks,threads>>>(d_stack,size_for_cufft,scale_);
+  const double expected = 1e-4;
+  const bool result = l2norm<expected;
   
-  //BACKWARD
-  cufftHandle fftPlanInv;
-  cufftPlan3d(&fftPlanInv, shape[fc::row_major::x], shape[fc::row_major::y], shape[fc::row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
-  cufftExecC2R(fftPlanInv, (cufftComplex*)d_stack, (cufftReal *)d_stack);HANDLE_ERROR_KERNEL;
-  ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
-  
-  fc::image_stack received(shape);
-  std::fill(received.data(),received.data()+img_size,0);
-  HANDLE_ERROR( cudaMemcpy( received.data(), d_stack , img_size*sizeof(float) , cudaMemcpyDeviceToHost ) );
-
-  for(size_t i = 0;i<img_size;++i){
-    double diff = received.data()[i]-stack.data()[i];
-    BOOST_REQUIRE_MESSAGE(std::abs(diff)<1e-2,"convolved " << received.data()[i] << " not equal expected " << stack.data()[i] << " at " << i );
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+    std::cout << "\nl2norm = " << l2norm << "\n";
   }
 
-  HANDLE_ERROR( cudaFree( d_stack));
+  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+
 }
 
-BOOST_AUTO_TEST_CASE(outofplace_returns_equal) {
 
-  std::vector<size_t> shape(3,17);
-  shape[fc::row_major::z] = 13;
-  shape[fc::row_major::x] = 19;
+BOOST_AUTO_TEST_CASE(power_of_3_shape) {
+
+  std::vector<size_t> shape(3,std::pow(3,3));
 
   fc::image_stack stack(shape);
+  fc::image_stack received(shape);
 
   for(size_t i = 0;i<stack.num_elements();++i)
     stack.data()[i] = i;
@@ -161,51 +343,96 @@ BOOST_AUTO_TEST_CASE(outofplace_returns_equal) {
 
   BOOST_REQUIRE(img_size > 32);
   
-  std::vector<size_t> shape_for_cufft(shape);
-  shape_for_cufft[fc::row_major::x] = (shape[fc::row_major::x]/2) + 1;
-  size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
-  
-  cufftComplex* d_complex = 0;
-  cufftReal* d_real = 0;
-  
-  HANDLE_ERROR( cudaMalloc( (void**)&(d_complex), size_for_cufft*sizeof(cufftComplex) ) );
-  HANDLE_ERROR( cudaMemset( d_complex, 0, size_for_cufft*sizeof(cufftComplex) ));
-
-  HANDLE_ERROR( cudaMalloc( (void**)&(d_real), img_size*sizeof(cufftComplex) ) );
-  HANDLE_ERROR( cudaMemcpy( d_real, stack.data(), img_size*sizeof(float) , cudaMemcpyHostToDevice ) );
-
-  //FORWARD
-  cufftHandle fftPlanFwd;
-  cufftPlan3d(&fftPlanFwd, shape[fc::row_major::x], shape[fc::row_major::y], shape[fc::row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
-  cufftExecR2C(fftPlanFwd, d_real, d_complex);HANDLE_ERROR_KERNEL;
-
-  //apply scale
-  const float scale_ = 1.f/float(img_size);
-  unsigned threads = 32;
-  unsigned blocks = (size_for_cufft + threads -1) /threads;
-  scale<<<blocks,threads>>>(d_complex,size_for_cufft,scale_);
-  
-  //BACKWARD
-  cufftHandle fftPlanInv;
-  cufftPlan3d(&fftPlanInv, shape[fc::row_major::x], shape[fc::row_major::y], shape[fc::row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
-  cufftExecC2R(fftPlanInv, d_complex, d_real);HANDLE_ERROR_KERNEL;
-
-  
-  fc::image_stack received(shape);
-  std::fill(received.data(),received.data()+img_size,0);
-  HANDLE_ERROR( cudaMemcpy( received.data(), d_real , img_size*sizeof(float) , cudaMemcpyDeviceToHost ) );
-
-  for(size_t i = 0;i<img_size;++i){
-    double diff = received.data()[i]-stack.data()[i];
-    BOOST_REQUIRE_MESSAGE(std::abs(diff)<1e-1,"convolved " << received.data()[i] << " not equal expected " << stack.data()[i] << " at " << i );
+  fc::outofplace_fft_ifft(stack, received);
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + img_size,
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float>()
+				     );
+  l2norm /= stack.num_elements();
+  const double expected = 1e-4;
+  const bool result = l2norm<expected;
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+    std::cout << "\nl2norm = " << l2norm << "\n";
   }
 
-  ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
-  ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
+  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
-  HANDLE_ERROR( cudaFree( d_real));
-  HANDLE_ERROR( cudaFree( d_complex));
 }
 
+BOOST_AUTO_TEST_CASE(power_of_5_shape) {
 
+  std::vector<size_t> shape(3,std::pow(5,2));
+
+  fc::image_stack stack(shape);
+  fc::image_stack received(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  size_t img_size = std::accumulate(shape.begin(), shape.end(),1,std::multiplies<size_t>());
+
+  BOOST_REQUIRE(img_size > 32);
+  
+  fc::outofplace_fft_ifft(stack, received);
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + img_size,
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float>()
+				     );
+  l2norm /= stack.num_elements();
+  const double expected = 1e-4;
+  const bool result = l2norm<expected;
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+    std::cout << "\nl2norm = " << l2norm << "\n";
+  }
+
+    BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+    BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+
+}
+
+BOOST_AUTO_TEST_CASE(power_of_7_shape) {
+
+  std::vector<size_t> shape(3,14);
+
+  fc::image_stack stack(shape);
+  fc::image_stack received(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  size_t img_size = std::accumulate(shape.begin(), shape.end(),1,std::multiplies<size_t>());
+
+  BOOST_REQUIRE(img_size > 32);
+  
+  fc::outofplace_fft_ifft(stack, received);
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + img_size,
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float>()
+				     );
+  l2norm /= stack.num_elements();
+  
+  const double expected = 1e-3;
+  const bool result = l2norm<expected;
+  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+
+}
 BOOST_AUTO_TEST_SUITE_END()
