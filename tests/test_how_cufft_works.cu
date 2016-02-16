@@ -24,6 +24,11 @@ namespace fourierconvolution {
     const static size_t w = x;
     const static size_t h = y;
     const static size_t d = z;
+
+    const static size_t in_x = x;
+    const static size_t in_y = y;
+    const static size_t in_z = z;
+
   };
 
   __global__ void scale(cufftComplex* _array, size_t _size, float _scale){
@@ -42,6 +47,8 @@ namespace fourierconvolution {
 
   void inplace_fft_ifft(image_stack& _stack){
 
+    typedef boost::multi_array<cufftComplex,3> frequ_stack;
+    
     const size_t img_size = _stack.num_elements();
     std::vector<size_t> shape(_stack.shape(),_stack.shape() + image_stack::dimensionality);
     
@@ -55,7 +62,26 @@ namespace fourierconvolution {
   
     HANDLE_ERROR( cudaMalloc( (void**)&(d_stack), size_for_cufft*sizeof(cufftComplex) ) );
     HANDLE_ERROR( cudaMemset( d_stack, 0, size_for_cufft*sizeof(cufftComplex) ));
-    HANDLE_ERROR( cudaMemcpy( d_stack, _stack.data(), img_size*sizeof(float) , cudaMemcpyHostToDevice ) );
+
+    //transform input data to cufft/fftw
+    frequ_stack cufft_compliant(shape_for_cufft);
+    float* stack_begin = _stack.data();
+    float* cufft_begin = reinterpret_cast<float*>(cufft_compliant.data());
+    
+    for(size_t z = 0;z<shape[row_major::in_z];++z)
+      for(size_t y = 0;y<shape[row_major::in_y];++y){
+	
+	size_t cufft_line_offset = (z*shape_for_cufft[row_major::in_y]*shape_for_cufft[row_major::in_x])+ (y*shape_for_cufft[row_major::in_x]);
+	cufft_begin = reinterpret_cast<float*>(&cufft_compliant.data()[cufft_line_offset]);
+	
+	size_t stack_line_offset = (z*shape[row_major::in_y]*shape[row_major::in_x])+ (y*shape[row_major::in_x]);
+	stack_begin = &_stack.data()[stack_line_offset];
+	
+	std::copy(stack_begin,stack_begin + shape[row_major::in_x],cufft_begin);
+	
+      }
+    
+    HANDLE_ERROR( cudaMemcpy( d_stack, cufft_compliant.data(), size_for_cufft*sizeof(cufftComplex) , cudaMemcpyHostToDevice ) );
 
     //FORWARD
     cufftHandle fftPlanFwd;
@@ -74,13 +100,24 @@ namespace fourierconvolution {
     cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
     cufftExecC2R(fftPlanInv, (cufftComplex*)d_stack, (cufftReal *)d_stack);HANDLE_ERROR_KERNEL;
     ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
-  
-    image_stack received(shape);
-    std::fill(received.data(),received.data()+img_size,0);
-    HANDLE_ERROR( cudaMemcpy( received.data(), d_stack , img_size*sizeof(float) , cudaMemcpyDeviceToHost ) );
+
+    cufftComplex zero;zero.x = 0;zero.y = 0;
+    std::fill(cufft_compliant.data(),cufft_compliant.data()+cufft_compliant.num_elements(),zero);
+    HANDLE_ERROR( cudaMemcpy( cufft_compliant.data(), d_stack , size_for_cufft*sizeof(cufftComplex) , cudaMemcpyDeviceToHost ) );
     HANDLE_ERROR( cudaFree( d_stack));
 
-    std::copy(received.data(),received.data()+img_size,_stack.data());
+    for(size_t z = 0;z<shape[row_major::in_z];++z)
+      for(size_t y = 0;y<shape[row_major::in_y];++y){
+	
+	size_t cufft_line_offset = (z*shape_for_cufft[row_major::in_y]*shape_for_cufft[row_major::in_x])+ (y*shape_for_cufft[row_major::in_x]);
+	cufft_begin = reinterpret_cast<float*>(&cufft_compliant.data()[cufft_line_offset]);
+	
+	size_t stack_line_offset = (z*shape[row_major::in_y]*shape[row_major::in_x])+ (y*shape[row_major::in_x]);
+	stack_begin = &_stack.data()[stack_line_offset];
+	
+	std::copy(cufft_begin,cufft_begin + shape[row_major::in_x],stack_begin);
+	
+      }
 
     return;
   }
@@ -205,9 +242,165 @@ struct stack_fixture {
 
 BOOST_AUTO_TEST_SUITE(inplace)
 
+BOOST_AUTO_TEST_CASE(of_prime_shape) {
+
+  std::vector<size_t> shape(3,17);
+  shape[fc::row_major::z] = 13;
+  shape[fc::row_major::x] = 19;
+  
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + stack.num_elements(),
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  
+  
+}
+
 BOOST_AUTO_TEST_CASE(power_of_2) {
 
   std::vector<size_t> shape(3,16);
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + stack.num_elements(),
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  
+  
+}
+
+
+BOOST_AUTO_TEST_CASE(power_of_3) {
+
+  std::vector<size_t> shape(3,27);
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + stack.num_elements(),
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  
+  
+}
+
+BOOST_AUTO_TEST_CASE(power_of_5) {
+
+  std::vector<size_t> shape(3,25);
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double l2norm = std::inner_product(stack.data(),
+				     stack.data() + stack.num_elements(),
+				     received.data(),
+				     0.,
+				     std::plus<double>(),
+				     diff_squared<float,double>()
+				     );
+  l2norm /= stack.num_elements();
+
+  const double expected = 1e-1;
+  const bool result = l2norm<expected;
+
+  if(!result && FC_TRACE_LEVEL){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  
+  
+}
+
+BOOST_AUTO_TEST_CASE(power_of_7) {
+
+  std::vector<size_t> shape(3,2*7);
   fc::image_stack stack(shape);
 
   for(size_t i = 0;i<stack.num_elements();++i)
