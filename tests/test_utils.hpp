@@ -1,6 +1,9 @@
 #ifndef _TEST_UTILS_H_
 #define _TEST_UTILS_H_
 
+#include <cmath>
+#include <numeric>
+
 namespace fourierconvolution {
 
   template <int value = 42>
@@ -76,7 +79,7 @@ double l2norm(const stack_type& _reference, const stack_type& _data){
 				     _reference.data(),
 				     0.,
 				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
+				     fourierconvolution::diff_squared<float,double>()
 				     );
 
   double value = std::sqrt(l2norm)/_data.num_elements();
@@ -91,7 +94,7 @@ double l2norm_by_nvidia(const stack_type& _reference, const stack_type& _data){
 				     _reference.data(),
 				     0.,
 				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
+				     fourierconvolution::diff_squared<float,double>()
 				     );
 
   double reference = std::inner_product(_data.data(),

@@ -10,6 +10,9 @@
 #include "image_stack_utils.h"
 #include "convolution3Dfft.h"
 
+#ifndef FC_TRACE
+#define FC_TRACE 0
+#endif
 
 namespace fc = fourierconvolution;
 
@@ -120,7 +123,9 @@ BOOST_AUTO_TEST_CASE(identity_convolve_16) {
 				);
   }
   catch(std::runtime_error& exc){
-    BOOST_FAIL("failed due to " << exc.what());
+    BOOST_FAIL("failed due to " << exc.what()
+	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
   }
 
   //extract stack from padded_stack
@@ -145,11 +150,12 @@ BOOST_AUTO_TEST_CASE(identity_convolve_16) {
   l2norm /= stack.num_elements();
   const double l2_threshold = 1e-4;
   const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
 
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
+  if(FC_TRACE)
+    BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 BOOST_AUTO_TEST_CASE(identity_convolve_512) {
@@ -181,7 +187,9 @@ BOOST_AUTO_TEST_CASE(identity_convolve_512) {
 				selectDeviceWithHighestComputeCapability());
   }
   catch(std::runtime_error& exc){
-    BOOST_FAIL("failed due to " << exc.what());
+    BOOST_FAIL("failed due to " << exc.what()
+	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
   }
 
   BOOST_CHECK_EQUAL(padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2],42);
@@ -216,10 +224,13 @@ BOOST_AUTO_TEST_CASE(identity_convolve_256) {
 				selectDeviceWithHighestComputeCapability());
   }
   catch(std::runtime_error& exc){
-    BOOST_FAIL("failed due to " << exc.what());
+    BOOST_FAIL("failed due to " << exc.what()
+	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
   }
 
-  BOOST_CHECK_EQUAL(padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2],42);
+  float value = padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2];
+  BOOST_CHECK_CLOSE(value,42.f,.01);
 }
 
 
