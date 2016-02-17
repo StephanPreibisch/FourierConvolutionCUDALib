@@ -69,5 +69,6 @@ FUNCTION_PREFIX int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
 FUNCTION_PREFIX int getNumDevicesCUDA();
 FUNCTION_PREFIX void getNameDeviceCUDA(int devCUDA, char *name);
 FUNCTION_PREFIX long long int getMemDeviceCUDA(int devCUDA);
+FUNCTION_PREFIX int cuda_version();
 
 #endif //__CONVOLUTION_3D_FFT_H__

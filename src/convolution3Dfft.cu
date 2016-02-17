@@ -557,3 +557,9 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 		
 }
 
+
+int cuda_version(){
+  int value = CUDART_VERSION;
+  return value;
+}
+
