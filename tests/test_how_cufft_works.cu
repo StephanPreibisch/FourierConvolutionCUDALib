@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE HOW_CUFFT_WORKS
 #include "boost/test/unit_test.hpp"
 
-#ifndef FC_TRACE_LEVEL
-#define FC_TRACE_LEVEL false
+#ifndef FC_TRACE
+#define FC_TRACE false
 #endif
 
 #include <numeric>
@@ -194,19 +194,11 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
 
   fc::inplace_fft_ifft(received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + stack.num_elements(),
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-
+  double my_l2norm = l2norm(stack,received);
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
 
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
     std::cout << "expected:\n";
     fc::print_stack(stack);
@@ -214,8 +206,8 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
   
   
 }
@@ -232,19 +224,11 @@ BOOST_AUTO_TEST_CASE(power_of_2) {
 
   fc::inplace_fft_ifft(received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + stack.num_elements(),
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-
+double my_l2norm = l2norm(stack,received);
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
 
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
     std::cout << "expected:\n";
     fc::print_stack(stack);
@@ -252,8 +236,8 @@ BOOST_AUTO_TEST_CASE(power_of_2) {
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
   
   
 }
@@ -271,19 +255,11 @@ BOOST_AUTO_TEST_CASE(power_of_3) {
 
   fc::inplace_fft_ifft(received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + stack.num_elements(),
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-
+double my_l2norm = l2norm(stack,received);
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
 
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
     std::cout << "expected:\n";
     fc::print_stack(stack);
@@ -291,8 +267,8 @@ BOOST_AUTO_TEST_CASE(power_of_3) {
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
   
   
 }
@@ -309,19 +285,11 @@ BOOST_AUTO_TEST_CASE(power_of_5) {
 
   fc::inplace_fft_ifft(received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + stack.num_elements(),
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-
+double my_l2norm = l2norm(stack,received);
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
 
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
     std::cout << "expected:\n";
     fc::print_stack(stack);
@@ -329,8 +297,8 @@ BOOST_AUTO_TEST_CASE(power_of_5) {
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
   
   
 }
@@ -347,19 +315,11 @@ BOOST_AUTO_TEST_CASE(power_of_7) {
 
   fc::inplace_fft_ifft(received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + stack.num_elements(),
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-
+double my_l2norm = l2norm(stack,received);
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
 
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
     std::cout << "expected:\n";
     fc::print_stack(stack);
@@ -367,8 +327,38 @@ BOOST_AUTO_TEST_CASE(power_of_7) {
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
+  
+  
+}
+
+BOOST_AUTO_TEST_CASE(cube_128_shape) {
+
+  std::vector<size_t> shape(3,128);
+  fc::image_stack stack(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  fc::image_stack received(stack);
+
+  fc::inplace_fft_ifft(received);
+  
+  double my_l2norm = l2norm(stack,received);
+  const double expected = 1e-4;
+  const bool result = my_l2norm<expected;
+
+  if(!result && FC_TRACE){
+    std::cout << boost::unit_test::framework::current_test_case().p_name << "\n";
+    std::cout << "expected:\n";
+    fc::print_stack(stack);
+    std::cout << "\n\nreceived:\n";
+    fc::print_stack(received);
+  }
+  
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
   
   
 }
@@ -395,26 +385,19 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
 
   fc::outofplace_fft_ifft(stack, received);
   
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + img_size,
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
+double my_l2norm = l2norm(stack,received);
 
   const double expected = 1e-1;
-  const bool result = l2norm<expected;
-  if(!result && FC_TRACE_LEVEL){
+  const bool result = my_l2norm<expected;
+  if(!result && FC_TRACE){
     std::cout << "expected:\n";
     fc::print_stack(stack);
     std::cout << "\n\nreceived:\n";
     fc::print_stack(received);
   }
   
-  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
 
 }
 
@@ -433,28 +416,20 @@ BOOST_AUTO_TEST_CASE(power_of_2_shape) {
   BOOST_REQUIRE(img_size > 32);
   
   fc::outofplace_fft_ifft(stack, received);
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + img_size,
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float>()
-				     );
-  l2norm /= stack.num_elements();
-
+double my_l2norm = l2norm(stack,received);
   const double expected = 1e-4;
-  const bool result = l2norm<expected;
+  const bool result = my_l2norm<expected;
   
-  if(!result && FC_TRACE_LEVEL){
+  if(!result && FC_TRACE){
     std::cout << "expected:\n";
     fc::print_stack(stack);
     std::cout << "\n\nreceived:\n";
     fc::print_stack(received);
-    std::cout << "\nl2norm = " << l2norm << "\n";
+    std::cout << "\nl2norm = " << my_l2norm << "\n";
   }
 
-  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
 
 }
 
@@ -474,26 +449,18 @@ BOOST_AUTO_TEST_CASE(power_of_3_shape) {
   BOOST_REQUIRE(img_size > 32);
   
   fc::outofplace_fft_ifft(stack, received);
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + img_size,
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float>()
-				     );
-  l2norm /= stack.num_elements();
-  const double expected = 1e-4;
-  const bool result = l2norm<expected;
-  if(!result && FC_TRACE_LEVEL){
+double my_l2norm = l2norm(stack,received);  const double expected = 1e-4;
+  const bool result = my_l2norm<expected;
+  if(!result && FC_TRACE){
     std::cout << "expected:\n";
     fc::print_stack(stack);
     std::cout << "\n\nreceived:\n";
     fc::print_stack(received);
-    std::cout << "\nl2norm = " << l2norm << "\n";
+    std::cout << "\nl2norm = " << my_l2norm << "\n";
   }
 
-  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
 
 }
 
@@ -512,26 +479,18 @@ BOOST_AUTO_TEST_CASE(power_of_5_shape) {
   BOOST_REQUIRE(img_size > 32);
   
   fc::outofplace_fft_ifft(stack, received);
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + img_size,
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float>()
-				     );
-  l2norm /= stack.num_elements();
-  const double expected = 1e-4;
-  const bool result = l2norm<expected;
-  if(!result && FC_TRACE_LEVEL){
+double my_l2norm = l2norm(stack,received);  const double expected = 1e-4;
+  const bool result = my_l2norm<expected;
+  if(!result && FC_TRACE){
     std::cout << "expected:\n";
     fc::print_stack(stack);
     std::cout << "\n\nreceived:\n";
     fc::print_stack(received);
-    std::cout << "\nl2norm = " << l2norm << "\n";
+    std::cout << "\nl2norm = " << my_l2norm << "\n";
   }
 
-    BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-    BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+    BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+    BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
 
 }
 
@@ -550,19 +509,34 @@ BOOST_AUTO_TEST_CASE(power_of_7_shape) {
   BOOST_REQUIRE(img_size > 32);
   
   fc::outofplace_fft_ifft(stack, received);
-  double l2norm = std::inner_product(stack.data(),
-				     stack.data() + img_size,
-				     received.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float>()
-				     );
-  l2norm /= stack.num_elements();
-  
+double my_l2norm = l2norm(stack,received);  
   const double expected = 1e-3;
-  const bool result = l2norm<expected;
-  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
+  const bool result = my_l2norm<expected;
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
+
+}
+
+BOOST_AUTO_TEST_CASE(cube_128_shape) {
+
+  std::vector<size_t> shape(3,128);
+
+  fc::image_stack stack(shape);
+  fc::image_stack received(shape);
+
+  for(size_t i = 0;i<stack.num_elements();++i)
+    stack.data()[i] = i;
+
+  size_t img_size = std::accumulate(shape.begin(), shape.end(),1,std::multiplies<size_t>());
+
+  BOOST_REQUIRE(img_size > 32);
+  
+  fc::outofplace_fft_ifft(stack, received);
+  double my_l2norm = l2norm(stack,received);  
+  const double expected = 1e-3;
+  const bool result = my_l2norm<expected;
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << expected);
 
 }
 BOOST_AUTO_TEST_SUITE_END()
