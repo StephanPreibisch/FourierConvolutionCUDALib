@@ -133,26 +133,122 @@ namespace fourierconvolution {
       }
 
       int precision = msg.precision();
-      msg << std::setprecision(4);
+      msg << std::setprecision(8);
       const size_t* shapes = _marray.shape();
 
-      msg << std::setw(9) << "x = ";
-      for (size_t x_index = 0; x_index < (shapes[2]); ++x_index) {
-	msg << std::setw(8) << x_index << " ";
-      }
-      msg << "\n";
-      msg << std::setfill('-') << std::setw((shapes[2] + 1) * 9) << " "
-	  << std::setfill(' ') << std::endl;
+      //slice out in z
+      std::vector<size_t> z_indices;
+      if(shapes[0]>16){
+	for (size_t i = 0; i < (3); ++i) {
+	  z_indices.push_back(i);
+	}
 
-      for (size_t z_index = 0; z_index < (shapes[0]); ++z_index) {
+	for (size_t i = (shapes[0]/2)-1; i <= ((shapes[0]/2)+1); ++i) {
+	  z_indices.push_back(i);
+	}
+
+	for (size_t i = (shapes[0]-3); i < (shapes[0]); ++i) {
+	  z_indices.push_back(i);
+	}
+      } else {
+	z_indices.resize(16);
+	for (size_t i = 0; i < z_indices.size(); ++i) {
+	  z_indices[i] = i;
+	}
+      }
+
+      std::vector<size_t> y_indices;
+      if(shapes[1]>16){
+		for (size_t i = 0; i < (3); ++i) {
+	  y_indices.push_back(i);
+	}
+
+	for (size_t i = (shapes[0]/2)-1; i <= ((shapes[0]/2)+1); ++i) {
+	  y_indices.push_back(i);
+	}
+
+	for (size_t i = (shapes[0]-3); i < (shapes[0]); ++i) {
+	  y_indices.push_back(i);
+	}
+      } else {
+	y_indices.resize(16);
+	for (size_t i = 0; i < y_indices.size(); ++i) {
+	  y_indices[i] = i;
+	}
+      }
+
+      std::vector<size_t> x_indices;
+      if(shapes[0]>16){
+	for (size_t i = 0; i < (3); ++i) {
+	  x_indices.push_back(i);
+	}
+
+	for (size_t i = (shapes[0]/2)-1; i <= ((shapes[0]/2)+1); ++i) {
+	  x_indices.push_back(i);
+	}
+
+	for (size_t i = (shapes[0]-3); i < (shapes[0]); ++i) {
+	  x_indices.push_back(i);
+	}
+      } else {
+	x_indices.resize(16);
+	for (size_t i = 0; i < x_indices.size(); ++i) {
+	  x_indices[i] = i;
+	}
+      }
+
+      //draw header
+      const int col_width = 13;
+      msg << std::setw(col_width) << "x = ";      
+      if(shapes[2]<=16){
+	for (size_t x_index = 0; x_index < (shapes[2]); ++x_index) {
+	  msg << std::setw(col_width-1) << x_index << " ";
+	}
+      } else {
+	for (size_t x_index = 0; x_index < (3); ++x_index) {
+	  msg << std::setw(col_width-1) << x_index << " ";
+	}
+	msg << std::setw(9) << "...";
+	for (size_t x_index = (shapes[2]/2)-1; x_index <= ((shapes[2]/2)+1); ++x_index) {
+	  msg << std::setw(col_width-1) << x_index << " ";
+	}
+	msg << std::setw(9) << "...";
+	for (size_t x_index = (shapes[2])-2; x_index < (shapes[2]); ++x_index) {
+	  msg << std::setw(col_width-1) << x_index << " ";
+	}
+      }
+
+      
+      //draw stack
+      msg << "\n";
+      if(shapes[2]<=16){      
+	msg << std::setfill('-') << std::setw((shapes[2] + 1) * 9);
+      } else {
+	msg << std::setfill('-') << std::setw(10*9);
+      }
+
+      msg << " " << std::setfill(' ') << std::endl;
+
+      for (size_t z = 0; z < (z_indices.size()); ++z) {
+	size_t z_index = z_indices[z];
 	msg << "z[" << std::setw(5) << z_index << "] \n";
-	for (size_t y_index = 0; y_index < (shapes[1]); ++y_index) {
+	
+	for (size_t y = 0; y < (y_indices.size()); ++y) {
+	  size_t y_index = y_indices[y];
 	  msg << "y[" << std::setw(5) << y_index << "] ";
 
-	  for (size_t x_index = 0; x_index < (shapes[2]); ++x_index) {
-	    msg << std::setw(8) << _marray[z_index][y_index][x_index] << " ";
+	  if(shapes[2]<=16){
+	    for (size_t x_index = 0; x_index < (shapes[2]); ++x_index) {
+	      msg << std::setw(col_width-1) << _marray[z_index][y_index][x_index] << " ";
+	    }
+	  } else {
+	    for (size_t x = 0; x < x_indices.size(); ++x) {
+	      if(x % 3 == 0)
+		msg << std::setw(col_width) << "...";
+	      msg << std::setw(col_width-1) << _marray[z_index][y_index][x_indices[x]] << " ";
+	    }
+	    
 	  }
-
 	  msg << "\n";
 	}
 	msg << "\n";
