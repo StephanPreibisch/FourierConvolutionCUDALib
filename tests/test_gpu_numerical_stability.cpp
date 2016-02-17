@@ -10,6 +10,9 @@
 #include "image_stack_utils.h"
 #include "convolution3Dfft.h"
 
+#ifndef FC_TRACE
+#define FC_TRACE 0
+#endif
 
 namespace fc = fourierconvolution;
 
@@ -76,19 +79,20 @@ BOOST_AUTO_TEST_CASE(times_two_128) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] *= 2;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  const double l2_threshold = 1e-4;
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  double my_l2norm = l2norm(expected,convolved);
+
+  const double l2_threshold = 1e-3;
+  
+  const bool result = my_l2norm<l2_threshold;
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tmy_l2norm = " << my_l2norm);
+
+  double l2norm_nvidia = l2norm_by_nvidia(expected,convolved);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm_nvidia = " << l2norm_nvidia);
+  
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
+
+  if(FC_TRACE)
+    BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case().p_name << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
@@ -114,7 +118,7 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
 
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
   
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -132,23 +136,22 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] = 2*i;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  double l2_threshold = 1e-4;
+  double my_l2norm = l2norm(expected,convolved);
+  double l2_threshold = 1e-3;
   if(cuda_version() == 7050)
-    l2_threshold = 1e-4;
+    l2_threshold = 1e-3;
   
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
-  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  const bool result = my_l2norm<l2_threshold;
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
+
+  double l2norm_nvidia = l2norm_by_nvidia(expected,convolved);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm_nvidia = " << l2norm_nvidia);
+  
+  if(FC_TRACE){
+    BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
+    BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case().p_name << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  }
 }
 
 
@@ -176,7 +179,7 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two_padd_by_10fold) {
 
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
   
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -194,22 +197,21 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two_padd_by_10fold) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] = kernel[k_shape[fc::row_major::z]/2][k_shape[fc::row_major::y]/2][k_shape[fc::row_major::x]/2]*i;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  double l2_threshold = 1e-4;
+  double l2_threshold = 1e-3;
   if(cuda_version() == 7050)
-    l2_threshold = 1e-4;
+    l2_threshold = 1e-3;
+
+  double my_l2norm = l2norm(expected,convolved);
+  const bool result = my_l2norm<l2_threshold;
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+
+  double l2norm_nvidia = l2norm_by_nvidia(expected,convolved);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm_nvidia = " << l2norm_nvidia);
   
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
+
+  if(FC_TRACE)
+    BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case().p_name << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 
@@ -261,20 +263,16 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_16) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] *= 2;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  const double l2_threshold = 1e-4;
-  const bool result = l2norm<l2_threshold;
+  double my_l2norm = l2norm(expected,convolved);
+  const double l2_threshold = 1e-2;
+  const bool result = my_l2norm<l2_threshold;
   
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
+
+  if(FC_TRACE)
+    BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case().p_name << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 BOOST_AUTO_TEST_CASE(ramp_normalized_128) {
@@ -321,27 +319,20 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_128) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] *= 2;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  const double l2_threshold = 1e-4;
   
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
+  const double l2_threshold = 1e-3;
+  double my_l2norm = l2norm(expected,convolved);
+  const bool result = my_l2norm<l2_threshold;
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
 }
 
-BOOST_AUTO_TEST_CASE(ramp_normalized_512) {
+BOOST_AUTO_TEST_CASE(ramp_normalized_256) {
 
   //define input data
   std::vector<size_t> k_shape(3,31);
   k_shape[fc::row_major::z] = 91;
-  std::vector<size_t> s_shape(3,128);
+  std::vector<size_t> s_shape(3,256);
 
   fc::image_stack kernel(k_shape);
   fc::image_stack stack(s_shape);
@@ -380,18 +371,13 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_512) {
   for(size_t i = 0;i<expected.num_elements();++i)
     expected.data()[i] *= 2;
 
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  const double l2_threshold = 1e-4;
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  double my_l2norm = l2norm(expected,convolved);
+  const double l2_threshold = 1e-3;
+  const bool result = my_l2norm<l2_threshold;
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << my_l2norm);
+  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< my_l2norm <<" not smaller than " << l2_threshold);
+
+  if(FC_TRACE)
+    BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case().p_name << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 BOOST_AUTO_TEST_SUITE_END()
