@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
   
   
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(power_of_2) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
   
   
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(power_of_3) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
   
   
@@ -329,7 +329,7 @@ BOOST_AUTO_TEST_CASE(power_of_5) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
   
   
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(power_of_7) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("inplace    shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
   
   
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
     fc::print_stack(received);
   }
   
-  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
 }
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE(power_of_2_shape) {
     std::cout << "\nl2norm = " << l2norm << "\n";
   }
 
-  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
 }
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(power_of_3_shape) {
     std::cout << "\nl2norm = " << l2norm << "\n";
   }
 
-  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
 }
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(power_of_5_shape) {
     std::cout << "\nl2norm = " << l2norm << "\n";
   }
 
-    BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+    BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
     BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
 }
@@ -561,7 +561,7 @@ BOOST_AUTO_TEST_CASE(power_of_7_shape) {
   
   const double expected = 1e-3;
   const bool result = l2norm<expected;
-  BOOST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE("outofplace shape(x,y,z)=" << shape[fc::row_major::x]<< ", " << shape[fc::row_major::y]<< ", " << shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << expected);
 
 }

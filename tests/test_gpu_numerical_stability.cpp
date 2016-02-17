@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(times_two_128) {
   l2norm /= stack.num_elements();
   const double l2_threshold = 1e-4;
   const bool result = l2norm<l2_threshold;
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
 
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
   
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -145,10 +145,10 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two) {
     l2_threshold = 1e-4;
   
   const bool result = l2norm<l2_threshold;
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
-  BOOST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tdump convolved by identity kernel\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two_padd_by_10fold) {
 
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tpadding input to    shape(x,y,z)=" << int_s_shape[fc::row_major::x]<< ", " << int_s_shape[fc::row_major::y]<< ", " << int_s_shape[fc::row_major::z]);
   
   //do convolution
   convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
@@ -207,9 +207,9 @@ BOOST_AUTO_TEST_CASE(ramp_with_tiny_kernel_times_two_padd_by_10fold) {
     l2_threshold = 1e-4;
   
   const bool result = l2norm<l2_threshold;
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 
@@ -272,9 +272,9 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_16) {
   const double l2_threshold = 1e-4;
   const bool result = l2norm<l2_threshold;
   
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 
 BOOST_AUTO_TEST_CASE(ramp_normalized_128) {
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_128) {
   const double l2_threshold = 1e-4;
   
   const bool result = l2norm<l2_threshold;
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
 }
 
@@ -390,8 +390,8 @@ BOOST_AUTO_TEST_CASE(ramp_normalized_512) {
   l2norm /= stack.num_elements();
   const double l2_threshold = 1e-4;
   const bool result = l2norm<l2_threshold;
-  BOOST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
+  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
   BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  BOOST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
+  BOOST_TEST_MESSAGE("[" << boost::unit_test::framework::current_test_case << "]\texpected\n" << fc::stack_to_string(expected)  << "\nreceived\n\n" << fc::stack_to_string(convolved) << "\n");
 }
 BOOST_AUTO_TEST_SUITE_END()
