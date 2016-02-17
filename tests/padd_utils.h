@@ -12,16 +12,29 @@ namespace fourierconvolution {
 template <typename outT>
 struct add_minus_1 {
 
+  size_t factor;
+  
+  add_minus_1(size_t _factor=1):
+    factor(_factor){}
+  
   template <typename any_type>
   outT operator()(const any_type& _first, const any_type& _second) {
-    return _first + _second - 1;
+    return _first + 2*factor*(_second/2);
   }
 };
 
 template <typename inT, typename outT>
 struct minus_1_div_2 {
 
-  outT operator()(const inT& _first) { return (_first - 1) / 2; }
+  size_t factor;
+  
+  minus_1_div_2(size_t _factor=1):
+    factor(_factor){}
+  
+  outT operator()(const inT& _first) {
+    return (_first/2)*factor;
+  }
+  
 };
 
 template <typename ImageStackT>
@@ -84,21 +97,21 @@ struct zero_padd {
       : extents_(_other.extents_), offsets_(_other.offsets_) {}
 
   template <typename T, typename U>
-  zero_padd(T* _image, U* _kernel)
+  zero_padd(T* _image_shape, U* _kernel_shape, size_t padding_factor = 1)
       : extents_(ImageStackT::dimensionality, 0),
         offsets_(ImageStackT::dimensionality, 0) {
-    // static_assert(
-    //     std::numeric_limits<T>::is_integer == true,
-    //     "[zero_padd] didn't receive integer type as image shape descriptor");
-    // static_assert(
-    //     std::numeric_limits<U>::is_integer,
-    //     "[zero_padd] didn't receive integer type as kernel shape descriptor");
 
-    std::transform(_image, _image + ImageStackT::dimensionality, _kernel,
-                   extents_.begin(), add_minus_1<T>());
+    add_minus_1<T> padd_op(padding_factor);
+    std::transform(_image_shape, _image_shape + ImageStackT::dimensionality,
+		   _kernel_shape,
+                   extents_.begin(),
+		   padd_op);
 
-    std::transform(_kernel, _kernel + ImageStackT::dimensionality,
-                   offsets_.begin(), minus_1_div_2<U, size_type>());
+    minus_1_div_2<U, size_type> offset_op(padding_factor);
+    std::transform(_kernel_shape, 
+		   _kernel_shape + ImageStackT::dimensionality,
+                   offsets_.begin(),
+		   offset_op);
   }
 
   zero_padd& operator=(const zero_padd& _other) {
