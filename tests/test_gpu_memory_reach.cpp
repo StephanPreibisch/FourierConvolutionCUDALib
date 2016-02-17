@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(c_storage_order) {
 
 
 
-BOOST_AUTO_TEST_CASE(identity_convolve_16_cubed) {
+BOOST_AUTO_TEST_CASE(identity_convolve_16) {
 
   //define input data
   std::vector<size_t> k_shape(3,3);
@@ -113,9 +113,15 @@ BOOST_AUTO_TEST_CASE(identity_convolve_16_cubed) {
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
 
   //do convolution
-  convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
-                              kernel.data(), &int_k_shape[0],
-                              selectDeviceWithHighestComputeCapability());
+  try{
+    convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
+				kernel.data(), &int_k_shape[0],
+				selectDeviceWithHighestComputeCapability()
+				);
+  }
+  catch(std::runtime_error& exc){
+    BOOST_FAIL("failed due to " << exc.what());
+  }
 
   //extract stack from padded_stack
   fc::image_stack convolved =   padded_stack
@@ -169,25 +175,30 @@ BOOST_AUTO_TEST_CASE(identity_convolve_512) {
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
   //do convolution
-  convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
-                              kernel.data(), &int_k_shape[0],
-                              selectDeviceWithHighestComputeCapability());
+  try{
+    convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
+				kernel.data(), &int_k_shape[0],
+				selectDeviceWithHighestComputeCapability());
+  }
+  catch(std::runtime_error& exc){
+    BOOST_FAIL("failed due to " << exc.what());
+  }
 
   BOOST_CHECK_EQUAL(padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2],42);
 }
 
-BOOST_AUTO_TEST_CASE(times_two_512) {
+BOOST_AUTO_TEST_CASE(identity_convolve_256) {
 
   //define input data
   std::vector<size_t> k_shape(3,31);
   k_shape[fc::row_major::z] = 91;
-  std::vector<size_t> s_shape(3,512);
+  std::vector<size_t> s_shape(3,256);
 
   fc::image_stack kernel(k_shape);
   fc::image_stack stack(s_shape);
 
   std::fill(kernel.data(),kernel.data()+kernel.num_elements(),0);
-  kernel[k_shape[fc::row_major::z]/2][k_shape[fc::row_major::y]/2][k_shape[fc::row_major::x]/2] = 2;
+  kernel[k_shape[fc::row_major::z]/2][k_shape[fc::row_major::y]/2][k_shape[fc::row_major::x]/2] = 1;
   std::fill(stack.data(),stack.data()+stack.num_elements(),42);
 
 
@@ -198,39 +209,18 @@ BOOST_AUTO_TEST_CASE(times_two_512) {
 
   std::vector<int> int_s_shape(padder.extents_.rbegin(), padder.extents_.rend());
   std::vector<int> int_k_shape(k_shape.rbegin(), k_shape.rend());
-
   //do convolution
-  convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
-                              kernel.data(), &int_k_shape[0],
-                              selectDeviceWithHighestComputeCapability());
+  try{
+    convolution3DfftCUDAInPlace(padded_stack.data(), &int_s_shape[0],
+				kernel.data(), &int_k_shape[0],
+				selectDeviceWithHighestComputeCapability());
+  }
+  catch(std::runtime_error& exc){
+    BOOST_FAIL("failed due to " << exc.what());
+  }
 
-  //extract stack from padded_stack
-  fc::image_stack convolved =   padded_stack
-    [boost::indices
-     [fc::range(padder.offsets()[fc::row_major::z], padder.offsets()[fc::row_major::z] + s_shape[fc::row_major::z])]
-     [fc::range(padder.offsets()[fc::row_major::y], padder.offsets()[fc::row_major::y] + s_shape[fc::row_major::y])]
-     [fc::range(padder.offsets()[fc::row_major::x], padder.offsets()[fc::row_major::x] + s_shape[fc::row_major::x])]];
-
-  for(size_t i = 0;i<s_shape.size();++i)
-    BOOST_REQUIRE_EQUAL(convolved.shape()[i],s_shape[i]);
-
-  fc::image_stack expected(stack);
-  for(size_t i = 0;i<expected.num_elements();++i)
-    expected.data()[i] *= 2;
-
-  double l2norm = std::inner_product(convolved.data(),
-				     convolved.data() + convolved.num_elements(),
-				     expected.data(),
-				     0.,
-				     std::plus<double>(),
-				     fc::diff_squared<float,double>()
-				     );
-  l2norm /= stack.num_elements();
-  const double l2_threshold = 1e-4;
-  const bool result = l2norm<l2_threshold;
-  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case << "\tconvolution3DfftCUDAInPlace    shape(x,y,z)=" << s_shape[fc::row_major::x]<< ", " << s_shape[fc::row_major::y]<< ", " << s_shape[fc::row_major::z] << "\tl2norm = " << l2norm);
-  BOOST_REQUIRE_MESSAGE(result,"l2norm = "<< l2norm <<" not smaller than " << l2_threshold);
-  
+  BOOST_CHECK_EQUAL(padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2],42);
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
