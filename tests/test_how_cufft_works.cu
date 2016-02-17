@@ -8,6 +8,7 @@
 #include <numeric>
 #include <vector>
 
+#include "test_utils.hpp"
 #include "image_stack_utils.h"
 #include "traits.hpp"
 #include "book.h"
@@ -71,10 +72,10 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
+    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     if(CUDART_VERSION < 6050)
       cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING);
 
-    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     cufftExecR2C(fftPlanFwd, (cufftReal*)d_stack, (cufftComplex *)d_stack);HANDLE_ERROR_KERNEL;
     ( cufftDestroy(fftPlanFwd) );HANDLE_ERROR_KERNEL;
 
@@ -86,10 +87,10 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
+    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
     if(CUDART_VERSION < 6050)
       cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING);
-
-    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
+    
     cufftExecC2R(fftPlanInv, (cufftComplex*)d_stack, (cufftReal *)d_stack);HANDLE_ERROR_KERNEL;
     ( cufftDestroy(fftPlanInv) );HANDLE_ERROR_KERNEL;
 
@@ -140,9 +141,9 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
+    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     if(CUDART_VERSION < 6050)
       cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING);
-    cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C);HANDLE_ERROR_KERNEL;
     cufftExecR2C(fftPlanFwd, d_real, d_complex);HANDLE_ERROR_KERNEL;
 
     //apply scale
@@ -153,9 +154,10 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
+    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
     if(CUDART_VERSION < 6050)
       cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING);
-    cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R);HANDLE_ERROR_KERNEL;
+
     cufftExecC2R(fftPlanInv, d_complex, d_real);HANDLE_ERROR_KERNEL;
   
     std::fill(_output.data(),_output.data()+stack_size,0);
@@ -172,67 +174,6 @@ namespace fourierconvolution {
 };
 
 namespace fc = fourierconvolution;
-
-template <int value = 42>
-struct set_to_float {
-
-  float operator()(){
-
-    return float(value);
-    
-  }
-  
-};
-
-template<typename in_type, typename out_type = in_type>
-struct diff_squared {
-
-  out_type operator()(const in_type& _first, const in_type& _second){
-
-    out_type value = _first - _second;
-    return (value*value);
-    
-  }
-  
-};
-
-
-
-struct ramp
-{
-  size_t value;
-
-  ramp():
-    value(0){};
-  
-  float operator()(){
-
-    return value++;
-    
-  }
-  
-};
-  
-
-template <typename value_policy = ramp>
-struct stack_fixture {
-
-  fc::image_stack stack;
-  fc::image_stack kernel;
-
-  template <typename T>
-  stack_fixture(const std::vector<T>& _stack_shape,
-	       const std::vector<T>& _kernel_shape):
-    stack(_stack_shape),
-    kernel(_kernel_shape){
-
-    value_policy operation;
-    std::fill(kernel.data(),kernel.data()+kernel.num_elements(),0);
-    std::generate(stack.data(),stack.data()+stack.num_elements(),operation);
-    
-  }
-  
-};
 
 
 
@@ -258,7 +199,7 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -296,7 +237,7 @@ BOOST_AUTO_TEST_CASE(power_of_2) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -335,7 +276,7 @@ BOOST_AUTO_TEST_CASE(power_of_3) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -373,7 +314,7 @@ BOOST_AUTO_TEST_CASE(power_of_5) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -411,7 +352,7 @@ BOOST_AUTO_TEST_CASE(power_of_7) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -459,7 +400,7 @@ BOOST_AUTO_TEST_CASE(of_prime_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float,double>()
+				     fc::diff_squared<float,double>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -497,7 +438,7 @@ BOOST_AUTO_TEST_CASE(power_of_2_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float>()
+				     fc::diff_squared<float>()
 				     );
   l2norm /= stack.num_elements();
 
@@ -538,7 +479,7 @@ BOOST_AUTO_TEST_CASE(power_of_3_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float>()
+				     fc::diff_squared<float>()
 				     );
   l2norm /= stack.num_elements();
   const double expected = 1e-4;
@@ -576,7 +517,7 @@ BOOST_AUTO_TEST_CASE(power_of_5_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float>()
+				     fc::diff_squared<float>()
 				     );
   l2norm /= stack.num_elements();
   const double expected = 1e-4;
@@ -614,7 +555,7 @@ BOOST_AUTO_TEST_CASE(power_of_7_shape) {
 				     received.data(),
 				     0.,
 				     std::plus<double>(),
-				     diff_squared<float>()
+				     fc::diff_squared<float>()
 				     );
   l2norm /= stack.num_elements();
   
