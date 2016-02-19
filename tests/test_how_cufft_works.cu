@@ -130,7 +130,8 @@ namespace fourierconvolution {
     std::fill(_output.data(),_output.data()+stack_size,0);
     
     std::vector<size_t> shape_for_cufft(shape);
-    shape_for_cufft[row_major::x] = (shape[row_major::x]/2) + 1;
+    shape_for_cufft[row_major::z] = (shape[row_major::z]/2) + 1;
+    
     size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
   
     cufftComplex* d_complex = 0;
