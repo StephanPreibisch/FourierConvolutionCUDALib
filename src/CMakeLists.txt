@@ -2,6 +2,10 @@
 # src directory
 INCLUDE_DIRECTORIES(.)
 
+IF(APPLE)
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++")
+ENDIF(APPLE)
+
 # build and link
 FIND_PACKAGE(CUDA QUIET)
 CUDA_ADD_LIBRARY(${PROJECT_NAME} convolution3Dfft.cu standardCUDAfunctions.cu SHARED)
