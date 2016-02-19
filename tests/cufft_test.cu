@@ -1,30 +1,11 @@
-/*
-
-*/
-
-
-// includes, system
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <time.h>
-#include <sys/time.h>
 #include <cufft.h>
 #include <iostream>
 #include <fstream>
 
-#include "../utils.h"
+//#include "../utils.h"
 
-void cudasafe( cudaError_t error, char* message = 0){
-  if(error!=cudaSuccess) { fprintf(stderr,"ERROR: %s : %i\n",message,error); exit(-1); }
-}
-
-void runTest(int argc, char **argv);
-
-int main(int argc, char **argv)
-{
-    runTest(argc, argv);
+inline static void cudasafe( cudaError_t error, char* message = 0){
+  if(error!=cudaSuccess) { std::cerr << "ERROR: "<< message << " : " << error << "\n"; exit(1); }
 }
 
 void runTest(int argc, char **argv)
@@ -37,7 +18,7 @@ void runTest(int argc, char **argv)
   long Nz = 256;
   
   if (argc==1){
-	std::cout<<"usage: cufft_test Nx Ny Nz"<<std::endl;
+    std::cout<<"usage: cufft_test Nx Ny Nz"<<std::endl;
     return;
   }
   
@@ -64,16 +45,16 @@ void runTest(int argc, char **argv)
 
   for (unsigned int i = 0; i < N_total; ++i)
     {
-	  x[i].x = 1.*rand()/RAND_MAX;
-	  x[i].y = 1.*rand()/RAND_MAX;
+      x[i].x = 1.*rand()/RAND_MAX;
+      x[i].y = 1.*rand()/RAND_MAX;
 
-	}
+    }
 
 	
 
   // Copy host memory to device
   cudasafe(cudaMemcpy(x_g, x, sizeof(cufftComplex) * N_total, 
-					  cudaMemcpyHostToDevice));
+		      cudaMemcpyHostToDevice));
 	
   // CUFFT plan
   cufftHandle plan;
@@ -85,19 +66,19 @@ void runTest(int argc, char **argv)
 
 
   cudaMemcpy(y,x_g, sizeof(cufftComplex) * N_total, 
-			 cudaMemcpyDeviceToHost);
+	     cudaMemcpyDeviceToHost);
 
   //calc difference
 
   double diff = 0.;
 
   for (unsigned int i = 0; i < N_total; ++i)
-	{
-	  y[i].x *= 1./N_total;
-	  y[i].y *= 1./N_total;
+    {
+      y[i].x *= 1./N_total;
+      y[i].y *= 1./N_total;
 	  
-	  diff += (x[i].x-y[i].x)*(x[i].x-y[i].x)+(x[i].y-y[i].y)*(x[i].y-y[i].y);
-	}
+      diff += (x[i].x-y[i].x)*(x[i].x-y[i].x)+(x[i].y-y[i].y)*(x[i].y-y[i].y);
+    }
 
   printf("\nfirst element x: \t %f + %fj\n",x[0].x,x[0].y);
   printf("\nfirst element y: \t %f + %fj\n",y[0].x,y[0].y);
