@@ -401,8 +401,12 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 
 	//size of the R2C transform in units of cuFFTComplex
 	//should be n_z*n_y*(|_n_x/2_| + 1)*2 = 2*(n_z*n_y*n_x + n_z*n_y)
-	std::vector<size_t> kernel_shape(kernelDim,kernelDim+3);
-	std::vector<size_t> stack_shape(imDim,imDim+3);
+	std::vector<size_t> math_kernel_shape(kernelDim,kernelDim+3);
+	std::vector<size_t> kernel_shape(math_kernel_shape.rbegin(), math_kernel_shape.rend());
+	// std::vector<size_t> kernel_shape(kernelDim,kernelDim+3);
+	std::vector<size_t> math_stack_shape(imDim,imDim+3);
+	std::vector<size_t> stack_shape(math_stack_shape.rbegin(), math_stack_shape.rend());
+	//	std::vector<size_t> stack_shape(imDim,imDim+3);
 	std::vector<size_t> complex_shape(stack_shape);
 	complex_shape[fc::row_major::x] = (stack_shape[fc::row_major::x]/2) + 1;
 
@@ -440,7 +444,10 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	fftShiftKernel<<<numBlocks,numThreads>>>(kernelCUDA,
 						 shifted_kernel,
 						 kernelDim[0],kernelDim[1],kernelDim[2],
-						 imDim[0],imDim[1],imDim[2]
+						 // imDim[0],imDim[1],imDim[2]
+						 stack_shape[fc::row_major::x],
+						 stack_shape[fc::row_major::y],
+						 stack_shape[fc::row_major::z]
 						 );
 	HANDLE_ERROR_KERNEL;
 	HANDLE_ERROR( cudaFree( kernelCUDA));kernelCUDA=NULL;
@@ -498,9 +505,10 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 				  cudaMemcpyHostToDevice ) );
 
 	
-	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, imDim[0], imDim[1], imDim[2], CUFFT_R2C));
+	// THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, imDim[0], imDim[1], imDim[2], CUFFT_R2C));
+	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, stack_shape[fc::row_major::z], stack_shape[fc::row_major::y], stack_shape[fc::row_major::x], CUFFT_R2C));
+	
 	//TODO: is this needed only cuda 6 or earlier
-	//cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_NATIVE);HANDLE_ERROR_KERNEL; 
 	
 	THROW_CUFFT_ERROR(cufftExecR2C(fftPlanFwd, (cufftReal *)imCUDA, imCUDA));
 	//transforming image
@@ -522,7 +530,8 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	HANDLE_ERROR( cudaFree( kernelPaddedCUDA));
 
 	//inverse FFT 
-	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanInv, imDim[0], imDim[1], imDim[2], CUFFT_C2R));
+	// THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanInv, imDim[0], imDim[1], imDim[2], CUFFT_C2R));
+	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanInv, stack_shape[fc::row_major::z], stack_shape[fc::row_major::y], stack_shape[fc::row_major::x], CUFFT_C2R));
 
 	//TODO: check if this is needed with CUDA 6.*
 	// cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_NATIVE);HANDLE_ERROR_KERNEL;
