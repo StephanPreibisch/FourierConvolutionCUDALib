@@ -75,7 +75,7 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
-    CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C));
+    CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, shape[row_major::z], shape[row_major::y], shape[row_major::x], CUFFT_R2C));
     if(CUDART_VERSION < 6050)
       CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING));
 
@@ -90,7 +90,7 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
-    CUFFT_ERROR(cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R));
+    CUFFT_ERROR(cufftPlan3d(&fftPlanInv, shape[row_major::z], shape[row_major::y], shape[row_major::x], CUFFT_C2R));
     if(CUDART_VERSION < 6050)
       CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING));
     
@@ -130,7 +130,7 @@ namespace fourierconvolution {
     std::fill(_output.data(),_output.data()+stack_size,0);
     
     std::vector<size_t> shape_for_cufft(shape);
-    shape_for_cufft[row_major::z] = (shape[row_major::z]/2) + 1;
+    shape_for_cufft[row_major::x] = (shape[row_major::x]/2) + 1;//even though this is wrong, it makes the out-of-place fft work!
     
     size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());
   
@@ -145,7 +145,7 @@ namespace fourierconvolution {
 
     //FORWARD
     cufftHandle fftPlanFwd;
-    CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_R2C));
+    CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, shape[row_major::z], shape[row_major::y], shape[row_major::x], CUFFT_R2C));
     if(CUDART_VERSION < 6050)
       CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_FFTW_PADDING));
     CUFFT_ERROR(cufftExecR2C(fftPlanFwd, d_real, d_complex));
@@ -158,7 +158,7 @@ namespace fourierconvolution {
   
     //BACKWARD
     cufftHandle fftPlanInv;
-    CUFFT_ERROR(cufftPlan3d(&fftPlanInv, shape[row_major::x], shape[row_major::y], shape[row_major::z], CUFFT_C2R));
+    CUFFT_ERROR(cufftPlan3d(&fftPlanInv, shape[row_major::z], shape[row_major::y], shape[row_major::x], CUFFT_C2R));
     if(CUDART_VERSION < 6050)
       CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_FFTW_PADDING));
 
