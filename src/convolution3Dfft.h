@@ -71,4 +71,17 @@ FUNCTION_PREFIX void getNameDeviceCUDA(int devCUDA, char *name);
 FUNCTION_PREFIX long long int getMemDeviceCUDA(int devCUDA);
 FUNCTION_PREFIX int cuda_version();
 
+/**
+   \brief function to ask cufft how much memory it'll need for a transform of size shape
+   
+   \param[in] shape .. dimensions of the signal to transform
+   \param[in] len   .. number of dimensions
+   
+   \return 
+   \retval 
+   
+*/
+FUNCTION_PREFIX int gpu_mem_needed_mb(int* shape, int len);
+
+
 #endif //__CONVOLUTION_3D_FFT_H__

@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # project name
-PROJECT(FourierConvolutionCUDALib CXX)
+PROJECT(FourierConvolutionCUDALib CXX C)
 if(NOT(${CMAKE_VERSION} VERSION_LESS "3.0.0"))
 cmake_policy(SET CMP0042 NEW)
 endif()

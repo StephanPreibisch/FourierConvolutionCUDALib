@@ -125,7 +125,8 @@ BOOST_AUTO_TEST_CASE(identity_convolve_16) {
   catch(std::runtime_error& exc){
     BOOST_FAIL("failed due to " << exc.what()
 	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
-	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]
+	       );
   }
 
   //extract stack from padded_stack
@@ -189,7 +190,8 @@ BOOST_AUTO_TEST_CASE(identity_convolve_512) {
   catch(std::runtime_error& exc){
     BOOST_FAIL("failed due to " << exc.what()
 	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
-	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]
+	       );
   }
 
   BOOST_CHECK_EQUAL(padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2],42);
@@ -226,12 +228,57 @@ BOOST_AUTO_TEST_CASE(identity_convolve_256) {
   catch(std::runtime_error& exc){
     BOOST_FAIL("failed due to " << exc.what()
 	       << "\n do not use convolution3DfftCUDAInPlace on this GPU with shapes larger than "
-	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]);
+	       << "(x,y,z) = " << s_shape[fc::row_major::x] << "x" << s_shape[fc::row_major::y] << "x" << s_shape[fc::row_major::z]
+	       );
   }
 
   float value = padded_stack[int_s_shape[fc::row_major::d]/2][int_s_shape[fc::row_major::h]/2][int_s_shape[fc::row_major::w]/2];
   BOOST_CHECK_CLOSE(value,42.f,.01);
 }
 
+// BOOST_AUTO_TEST_CASE(sweep_3D_shapes) {
 
+//   std::vector<int> shape(3,0);
+//   size_t max_size_mb = 0;
+//   for(int exponent_2 = 1;exponent_2<12;++exponent_2){
+//     for(int exponent_3 = 0;exponent_3<12;++exponent_3){
+//       for(int exponent_5 = 0;exponent_5<12;++exponent_5){
+// 	for(int exponent_7 = 0;exponent_7<12;++exponent_7){
+
+// 	  size_t single = std::pow(2,exponent_2)*std::pow(3,exponent_3)*std::pow(5,exponent_5)*std::pow(7,exponent_7);
+// 	  std::vector<int> next_shape(3,single);
+// 	  size_t temp_mb = 0;
+
+// 	  const size_t expected_size_mb = std::pow(single,3)*sizeof(float)/float(1<<20);
+
+// 	  if(expected_size_mb < max_size_mb)
+// 	    continue;
+	  
+// 	  BOOST_TEST_MESSAGE(boost::unit_test::framework::current_test_case().p_name << "\t try shape "
+// 			     << "2^" << exponent_2 << "x"
+// 			     << "3^" << exponent_3 << "x"
+// 			     << "5^" << exponent_5 << "x"
+// 			     << "7^" << exponent_7 << " = "
+// 			     << single << "^3 = " << expected_size_mb << " MB");
+	  
+// 	  try{
+// 	    temp_mb = gpu_mem_needed_mb(&next_shape[0],3);
+// 	  }
+// 	  catch(...){
+// 	    break;
+// 	  }
+	  
+// 	  if(temp_mb>max_size_mb){
+// 	    max_size_mb = temp_mb;
+// 	    shape = next_shape;
+// 	  }
+// 	}
+//       }
+//     }
+//   }
+
+//   BOOST_CHECK_GT(max_size_mb,0);
+//   std::cout << "maximum possible FFT size: " << max_size_mb << " MB, "
+// 	    << shape[0] << "x" << shape[1] << "x" << shape[2] << "\n" ;
+// }
 BOOST_AUTO_TEST_SUITE_END()

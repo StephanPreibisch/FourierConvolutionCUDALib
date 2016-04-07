@@ -574,3 +574,21 @@ int cuda_version(){
   return value;
 }
 
+
+int gpu_mem_needed_mb(int* shape, int len){
+  size_t workSize_bytes = 0;
+  size_t* ws = &workSize_bytes;
+
+  if(len==1)
+    THROW_CUFFT_ERROR(cufftEstimate1d(shape[0],CUFFT_R2C,1,ws));
+
+  if(len==2)
+    THROW_CUFFT_ERROR(cufftEstimate2d(shape[0],shape[1],CUFFT_R2C,ws));
+
+  if(len==3)
+    THROW_CUFFT_ERROR(cufftEstimate3d(shape[0],shape[1],shape[2],CUFFT_R2C,ws));
+
+  int value = workSize_bytes/(1 << 20);
+  return value;
+  
+}
