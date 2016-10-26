@@ -1,20 +1,22 @@
-#define BOOST_TEST_MODULE HOW_CUFFT_WORKS
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TEST_HOW_CUFFT_WORKS
 #include "boost/test/unit_test.hpp"
+#include <numeric>
+#include <vector>
 
 #ifndef FC_TRACE
 #define FC_TRACE false
 #endif
 
-#include <numeric>
-#include <vector>
+
+#include "cufft.h"
+#include "cufft_test.cuh"
 
 #include "test_utils.hpp"
 #include "image_stack_utils.h"
 #include "traits.hpp"
 #include "book.h"
-#include "cufft.h"
 
-#include "cufft_test.cuh"
 
 namespace fourierconvolution {
 
@@ -37,13 +39,9 @@ namespace fourierconvolution {
   void inplace_fft_ifft(image_stack& _stack){
 
     
-
-    
     const size_t img_size = _stack.num_elements();
     std::vector<size_t> shape(_stack.shape(),_stack.shape() + image_stack::dimensionality);
     
-    BOOST_REQUIRE(img_size > 32);
-  
     std::vector<size_t> shape_for_cufft(shape);
     shape_for_cufft[row_major::x] = (shape[row_major::x]/2) + 1;
     const size_t size_for_cufft = std::accumulate(shape_for_cufft.begin(), shape_for_cufft.end(),1,std::multiplies<size_t>());

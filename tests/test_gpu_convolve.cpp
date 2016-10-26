@@ -1,8 +1,9 @@
 #define BOOST_TEST_MODULE GPU_CONVOLUTION
+#include <numeric>
+
 #include "boost/test/unit_test.hpp"
 #include "test_fixtures.hpp"
 #include "padd_utils.h"
-#include <numeric>
 
 #include "convolution3Dfft.h"
 #include "test_utils.hpp"

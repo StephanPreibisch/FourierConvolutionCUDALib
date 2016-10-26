@@ -7,4 +7,6 @@
 
 
 add_test(NAME gpu_convolve COMMAND test_gpu_convolve)
+add_test(NAME gpu_numerical_stability COMMAND test_gpu_numerical_stability)
+add_test(NAME how_cufft_works COMMAND test_how_cufft_works)
 
