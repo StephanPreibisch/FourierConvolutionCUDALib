@@ -11,7 +11,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.1")
 cmake_policy(SET CMP0054 NEW)
 endif()
 
- 
+option(ENABLE_TESTING "enable the test suite (requires boost to be installed" ON) 
 # version number
 SET (FOURIERCONVOLUTIONCUDALIB_NAME "CUDA FOURIER CONVOLUTION LIBRARY")
 SET (FOURIERCONVOLUTIONCUDALIB_CODENAME "${PROJECT_NAME}")
@@ -75,8 +75,8 @@ IF(INCLUDE_CUDA)
     FIND_PACKAGE(CUDA)
     IF(CUDA_FOUND)
 	SET(CUDA_VERBOSE_BUILD ON)
-	
-	set(CUDA_NVCC_FLAGS -gencode arch=compute_10,code=sm_10;-gencode arch=compute_20,code=sm_20)
+	set(CUDA_ARCHS 10;20;30;35;37;50;52;60;61)
+
 	SET(CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
 	IF(APPLE)
 	  IF(${CUDA_HOST_COMPILER} MATCHES "/usr/bin/.*cc" OR EXISTS "/usr/bin/llvm-g++")
@@ -91,13 +91,49 @@ IF(INCLUDE_CUDA)
 	    MESSAGE(WARNING ">> unknown CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) or /usr/bin/llvm-g++-4.2 does not exist, cuda host compiler remains set to default")
 	  ENDIF()
 	ENDIF(APPLE)
-	IF("${CUDA_VERSION}" VERSION_GREATER "5" OR "${CUDA_VERSION}" VERSION_EQUAL "5")
-	  MESSAGE(">> compiling for Compute Capability 2.x, 3.0 and 3.5 only ")
-          set(CUDA_NVCC_FLAGS "-gencode arch=compute_20,code=sm_20;-gencode arch=compute_30,code=sm_30;-gencode arch=compute_35,code=sm_35")
-	ELSE()
-	  MESSAGE(">> CUDA less than version 5.0 detected, compiling for Compute Capability 2.x only ")
-          set(CUDA_NVCC_FLAGS "-gencode arch=compute_20,code=sm_20;-gencode arch=compute_10,code=sm_10")
+
+	set(CUDA_ARCHS 10;20;21)
+
+	IF("${CUDA_VERSION}" VERSION_GREATER "4.5")
+	  list(APPEND CUDA_ARCHS 30 32 35)#5.0+
 	ENDIF()
+
+	IF("${CUDA_VERSION}" VERSION_GREATER "5.5")
+	  list(APPEND CUDA_ARCHS 50)#6.0+
+	ENDIF()
+
+	IF("${CUDA_VERSION}" VERSION_GREATER "6.0")
+	  list(APPEND CUDA_ARCHS 37)#6.5+
+	ENDIF()
+	
+	IF("${CUDA_VERSION}" VERSION_GREATER "6.5")
+	  list(APPEND CUDA_ARCHS 52)#7.0+
+	  list(REMOVE_ITEM CUDA_ARCHS 10 20 21)	  
+	ENDIF()
+
+	#IF("${CUDA_VERSION}" VERSION_GREATER "7.0")
+	#  list(REMOVE_ITEM CUDA_ARCHS 20 21)#8.0+
+	#ENDIF()
+
+	IF("${CUDA_VERSION}" VERSION_GREATER "7.5")
+	  list(APPEND CUDA_ARCHS 60 61)#8.0+
+	ENDIF()
+
+	list(SORT CUDA_ARCHS)
+
+	list(LENGTH CUDA_ARCHS CUDA_ARCHS_SIZE)
+	
+	foreach(_SM IN LISTS CUDA_ARCHS)
+	  list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${_SM},code=sm_${_SM}")
+	endforeach()
+
+	math(EXPR CUDA_ARCHS_LAST_INDEX "${CUDA_ARCHS_SIZE}-1")
+	list(GET CUDA_ARCHS ${CUDA_ARCHS_LAST_INDEX} CUDA_HIGHEST_SM)
+
+        list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${CUDA_HIGHEST_SM},code=compute_${CUDA_HIGHEST_SM}")
+
+	MESSAGE(">> CUDA version ${CUDA_VERSION} detected, compiling for Compute Capability/ies ${CUDA_ARCHS} (highest SM: ${CUDA_HIGHEST_SM})")
+	
 	set(CUDA_NVCC_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE};-O2;--use_fast_math)
 	set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG};-g;-G)
     ELSE(CUDA_FOUND)
@@ -123,12 +159,16 @@ ENDIF(INCLUDE_CUDA)
 ADD_SUBDIRECTORY(src)
 
 FIND_PACKAGE (Boost 1.42 COMPONENTS system filesystem unit_test_framework thread QUIET)
-IF(Boost_FOUND)
-ADD_SUBDIRECTORY(tests)
-enable_testing()
-include("CTestLists.txt")
+IF(Boost_FOUND AND ENABLE_TESTING)
+  unset(Boost_FOUND)
+  ADD_SUBDIRECTORY(tests)
+  enable_testing()
+  include("CTestLists.txt")
 ELSE()
-MESSAGE(">> Boost libraries not found, skipping building setting up tests")
+  if(NOT Boost_FOUND)
+    MESSAGE(">> Boost libraries not found")
+  endif()
+  MESSAGE(">> skipping test suite")
 ENDIF()
 
 # Export the package for use from the build-tree

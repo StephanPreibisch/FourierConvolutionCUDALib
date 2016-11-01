@@ -256,6 +256,7 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	//printf("Creating R2C & C2R FFT plans for size %i x %i x %i\n",imDim[0],imDim[1],imDim[2]);
 	CUFFT_ERROR(cufftPlan3d(&fftPlanFwd, imDim[0], imDim[1], imDim[2], CUFFT_R2C));
 	CUFFT_ERROR(cufftPlan3d(&fftPlanInv, imDim[0], imDim[1], imDim[2], CUFFT_C2R));
+
 #if CUDART_VERSION <= 7500
 	CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanFwd,CUFFT_COMPATIBILITY_NATIVE)); //for highest performance since we do not need FFTW compatibility
 	CUFFT_ERROR(cufftSetCompatibilityMode(fftPlanInv,CUFFT_COMPATIBILITY_NATIVE));
@@ -543,6 +544,10 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanInv, stack_shape[fc::row_major::z], stack_shape[fc::row_major::y], stack_shape[fc::row_major::x], CUFFT_C2R));
 
 	//TODO: check if this is needed with CUDA 6.*
+<<<<<<< HEAD
+
+=======
+>>>>>>> 460098c213f78006b76dc29572d9350fea190fc4
 	THROW_CUFFT_ERROR(cufftExecC2R(fftPlanInv, imCUDA, (cufftReal *)imCUDA));
 	
 

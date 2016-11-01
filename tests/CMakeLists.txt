@@ -1,9 +1,7 @@
 INCLUDE_DIRECTORIES(.)
 
-
-SET(Boost_USE_MULTITHREADED ON)
-SET(Boost_USE_STATIC_LIBS ON)
-FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem unit_test_framework REQUIRED)
+FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS # system filesystem
+  unit_test_framework REQUIRED)
 IF(Boost_FOUND)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}) 
@@ -16,49 +14,22 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
 LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src) 
 
 CUDA_ADD_EXECUTABLE(test_gpu_convolve test_gpu_convolve.cpp image_stack_utils.cpp)
-CUDA_ADD_EXECUTABLE(test_gpu_memory_reach test_gpu_memory_reach.cpp image_stack_utils.cpp)
 CUDA_ADD_EXECUTABLE(test_gpu_numerical_stability test_gpu_numerical_stability.cpp image_stack_utils.cpp)
 CUDA_ADD_EXECUTABLE(test_how_cufft_works test_how_cufft_works.cu image_stack_utils.cpp)
 
 IF(Boost_FOUND)
-target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
-set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
 
-target_link_libraries(test_gpu_memory_reach ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
-set_target_properties(test_gpu_memory_reach PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+  MESSAGE(">> Boost UTF: ${Boost_LIBRARIES} ")
+  target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME})
+  set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
 
-target_link_libraries(test_gpu_numerical_stability ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
-set_target_properties(test_gpu_numerical_stability PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+  target_link_libraries(test_gpu_numerical_stability ${Boost_LIBRARIES} ${PROJECT_NAME})
+  set_target_properties(test_gpu_numerical_stability PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
 
-target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} ${PROJECT_NAME}_static)
-set_target_properties(test_how_cufft_works PROPERTIES COMPILE_FLAGS "-D${PROJECT_NAME}_BUILT_AS_STATIC")
+  target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} )
+  CUDA_ADD_CUFFT_TO_TARGET( test_how_cufft_works )
 
 
-MESSAGE(">> static Boost UTF: ${Boost_LIBRARIES}")
-ELSE(Boost_FOUND)
-
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREADED ON)
-FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem unit_test_framework REQUIRED)
-IF(Boost_FOUND)
-MESSAGE(">> dynamic Boost UTF ${Boost_LIBRARIES}")
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}) 
-
-target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME})
-set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
-
-target_link_libraries(test_gpu_memory_reach ${Boost_LIBRARIES} ${PROJECT_NAME})
-set_target_properties(test_gpu_memory_reach PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
-
-target_link_libraries(test_gpu_numerical_stability ${Boost_LIBRARIES} ${PROJECT_NAME})
-set_target_properties(test_gpu_numerical_stability PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
-
-target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} ${PROJECT_NAME})
-set_target_properties(test_how_cufft_works PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
-ELSE()
-MESSAGE(">> dynamic Boost UTF NOT FOUND")
-ENDIF()
 ENDIF(Boost_FOUND)
 
 ELSE(CUDA_FOUND)

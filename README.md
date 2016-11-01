@@ -23,7 +23,7 @@ The cmake build system is also supported under Windows 7 64bit now!
 $ cd X:\path\to\repo
 $ mkdir build
 $ cd build
-$ cmake.exe -G "Visual Studio 12 2013 Win64" -DCMAKE_INSTALL_PREFIX=C:/msys64/home/steinbac/ftmp -DBOOST_LIBRARYDIR=C:/boost_1_58_0/msvc-12-x86_64/lib64-msvc-12.0 -DBOOST_ROOT=C:/boost_1_58_0/msvc-12-x86_64 ..
+$ cmake.exe -G "Visual Studio 14 2015 Win64" -DCMAKE_INSTALL_PREFIX=C:/msys64/home/steinbac/ftmp -DBOOST_LIBRARYDIR=C:/boost_1_58_0/msvc-14-x86_64/lib64-msvc-14.0 -DBOOST_ROOT=C:/boost_1_58_0/msvc-12-x86_64 ..
 $ cmake.exe --build . --target ALL_BUILD --config Release
 $ ctest.exe -C Release #(optional) the above builds in Release mode
 $ cmake.exe --build . --target install --config Release
