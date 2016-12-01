@@ -544,10 +544,6 @@ imageType* convolution3DfftCUDA_test(imageType* im,
 	THROW_CUFFT_ERROR(cufftPlan3d(&fftPlanInv, stack_shape[fc::row_major::z], stack_shape[fc::row_major::y], stack_shape[fc::row_major::x], CUFFT_C2R));
 
 	//TODO: check if this is needed with CUDA 6.*
-<<<<<<< HEAD
-
-=======
->>>>>>> 460098c213f78006b76dc29572d9350fea190fc4
 	THROW_CUFFT_ERROR(cufftExecC2R(fftPlanInv, imCUDA, (cufftReal *)imCUDA));
 	
 
