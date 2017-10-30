@@ -11,7 +11,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.1")
 cmake_policy(SET CMP0054 NEW)
 endif()
 
-option(ENABLE_TESTING "enable the test suite (requires boost to be installed" ON) 
+option(ENABLE_TESTING "enable the test suite (requires boost to be installed" ON)
 # version number
 SET (FOURIERCONVOLUTIONCUDALIB_NAME "CUDA FOURIER CONVOLUTION LIBRARY")
 SET (FOURIERCONVOLUTIONCUDALIB_CODENAME "${PROJECT_NAME}")
@@ -56,7 +56,7 @@ ELSE(UNIX)
     MESSAGE(FATAL_ERROR ">> UNKNOWN ARCHITECTURE .. unable to set share dir")
   ENDIF()
 ENDIF(UNIX)
- 
+
 # Make relative paths absolute (needed later on)
 foreach(p LIB INCLUDE SHARE)
   set(var INSTALL_${p}_DIR)
@@ -74,91 +74,87 @@ OPTION(INCLUDE_CUDA "Set to OFF to not search for CUDA" ON)
 IF(INCLUDE_CUDA)
     FIND_PACKAGE(CUDA)
     IF(CUDA_FOUND)
-	SET(CUDA_VERBOSE_BUILD ON)
+    SET(CUDA_VERBOSE_BUILD ON)
     set(CUDA_ARCHS 10;20;30;35;37;50;52;60;61;70)
 
-	SET(CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
-	IF(APPLE)
-	  IF(${CUDA_HOST_COMPILER} MATCHES "/usr/bin/.*cc" OR EXISTS "/usr/bin/llvm-g++")
-	    MESSAGE(">> adapting CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) to match a CUDA supported compiler (/usr/bin/llvm-g++-4.2)")
-	    SET(CUDA_HOST_COMPILER "/usr/bin/llvm-g++")
-	    SET(CMAKE_CXX_COMPILER ${CUDA_HOST_COMPILER})
-	    SET(CMAKE_C_COMPILER "/usr/bin/llvm-gcc")
-	    SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libstdc++")
+    SET(CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
+    IF(APPLE)
+      IF(${CUDA_HOST_COMPILER} MATCHES "/usr/bin/.*cc" OR EXISTS "/usr/bin/llvm-g++")
+        MESSAGE(">> adapting CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) to match a CUDA supported compiler (/usr/bin/llvm-g++-4.2)")
+        SET(CUDA_HOST_COMPILER "/usr/bin/llvm-g++")
+        SET(CMAKE_CXX_COMPILER ${CUDA_HOST_COMPILER})
+        SET(CMAKE_C_COMPILER "/usr/bin/llvm-gcc")
+        SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libstdc++")
 
-	    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
-	  ELSE()
-	    MESSAGE(WARNING ">> unknown CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) or /usr/bin/llvm-g++-4.2 does not exist, cuda host compiler remains set to default")
-	  ENDIF()
-	ENDIF(APPLE)
+        SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+      ELSE()
+        MESSAGE(WARNING ">> unknown CUDA_HOST_COMPILER (${CUDA_HOST_COMPILER}) or /usr/bin/llvm-g++-4.2 does not exist, cuda host compiler remains set to default")
+      ENDIF()
+    ENDIF(APPLE)
 
-	set(CUDA_ARCHS 10;20;21)
+    set(CUDA_ARCHS 10;20;21)
 
-	IF("${CUDA_VERSION}" VERSION_GREATER "4.5")
-	  list(APPEND CUDA_ARCHS 30 32 35)#5.0+
-	ENDIF()
+    IF("${CUDA_VERSION}" VERSION_GREATER "4.5")
+      list(APPEND CUDA_ARCHS 30 32 35)#5.0+
+    ENDIF()
 
-	IF("${CUDA_VERSION}" VERSION_GREATER "5.5")
-	  list(APPEND CUDA_ARCHS 50)#6.0+
-	ENDIF()
+    IF("${CUDA_VERSION}" VERSION_GREATER "5.5")
+      list(APPEND CUDA_ARCHS 50)#6.0+
+    ENDIF()
 
-	IF("${CUDA_VERSION}" VERSION_GREATER "6.0")
-	  list(APPEND CUDA_ARCHS 37)#6.5+
-	ENDIF()
-	
-	IF("${CUDA_VERSION}" VERSION_GREATER "6.5")
-	  list(APPEND CUDA_ARCHS 52)#7.0+
-	  list(REMOVE_ITEM CUDA_ARCHS 10 20 21)	  
-	ENDIF()
+    IF("${CUDA_VERSION}" VERSION_GREATER "6.0")
+      list(APPEND CUDA_ARCHS 37)#6.5+
+    ENDIF()
 
-	#IF("${CUDA_VERSION}" VERSION_GREATER "7.0")
-	#  list(REMOVE_ITEM CUDA_ARCHS 20 21)#8.0+
-	#ENDIF()
+    IF("${CUDA_VERSION}" VERSION_GREATER "6.5")
+      list(APPEND CUDA_ARCHS 52)#7.0+
+      list(REMOVE_ITEM CUDA_ARCHS 10 20 21)
+    ENDIF()
 
-	IF("${CUDA_VERSION}" VERSION_GREATER "7.5")
-	  list(APPEND CUDA_ARCHS 60 61)#8.0+
-	ENDIF()
+    IF("${CUDA_VERSION}" VERSION_GREATER "7.5")
+      list(APPEND CUDA_ARCHS 60 61)#8.0+
+    ENDIF()
 
     IF("${CUDA_VERSION}" VERSION_GREATER "8.0")
       list(APPEND CUDA_ARCHS 70)#8.0+
     ENDIF()
 
 
-	list(SORT CUDA_ARCHS)
+    list(SORT CUDA_ARCHS)
 
-	list(LENGTH CUDA_ARCHS CUDA_ARCHS_SIZE)
-	
-	foreach(_SM IN LISTS CUDA_ARCHS)
-	  list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${_SM},code=sm_${_SM}")
-	endforeach()
+    list(LENGTH CUDA_ARCHS CUDA_ARCHS_SIZE)
 
-	math(EXPR CUDA_ARCHS_LAST_INDEX "${CUDA_ARCHS_SIZE}-1")
-	list(GET CUDA_ARCHS ${CUDA_ARCHS_LAST_INDEX} CUDA_HIGHEST_SM)
+    foreach(_SM IN LISTS CUDA_ARCHS)
+      list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${_SM},code=sm_${_SM}")
+    endforeach()
+
+    math(EXPR CUDA_ARCHS_LAST_INDEX "${CUDA_ARCHS_SIZE}-1")
+    list(GET CUDA_ARCHS ${CUDA_ARCHS_LAST_INDEX} CUDA_HIGHEST_SM)
 
         list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${CUDA_HIGHEST_SM},code=compute_${CUDA_HIGHEST_SM}")
 
-	MESSAGE(">> CUDA version ${CUDA_VERSION} detected, compiling for Compute Capability/ies ${CUDA_ARCHS} (highest SM: ${CUDA_HIGHEST_SM})")
-	
-	set(CUDA_NVCC_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE};-O2;--use_fast_math)
-	set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG};-g;-G)
+    MESSAGE(">> CUDA version ${CUDA_VERSION} detected, compiling for Compute Capability/ies ${CUDA_ARCHS} (highest SM: ${CUDA_HIGHEST_SM})")
+
+    set(CUDA_NVCC_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE};-O2;--use_fast_math)
+    set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG};-g;-G)
     ELSE(CUDA_FOUND)
         MESSAGE(FATAL_ERROR ">> CUDA not found. Exiting ...")
     ENDIF(CUDA_FOUND)
-	
-	IF(WIN32)
-		IF(${CUDA_VERSION} VERSION_GREATER "7" OR ${CUDA_VERSION} VERSION_EQUAL "7")
-			IF(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
-				message(FATAL_ERROR ">> CUDA version 7 or higher does not support 32bit builds on Windows (found CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})")
-			ELSE()
-				message(">> [Windows] 64bit build detected, size of void pointer ${CMAKE_SIZEOF_VOID_P}")
-			ENDIF()
-		
-		ENDIF()
-		SET(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
 
-	ENDIF(WIN32)
+    IF(WIN32)
+        IF(${CUDA_VERSION} VERSION_GREATER "7" OR ${CUDA_VERSION} VERSION_EQUAL "7")
+            IF(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+                message(FATAL_ERROR ">> CUDA version 7 or higher does not support 32bit builds on Windows (found CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})")
+            ELSE()
+                message(">> [Windows] 64bit build detected, size of void pointer ${CMAKE_SIZEOF_VOID_P}")
+            ENDIF()
+
+        ENDIF()
+        SET(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
+
+    ENDIF(WIN32)
 ENDIF(INCLUDE_CUDA)
- 
+
 
 # add subdirectories
 ADD_SUBDIRECTORY(src)
@@ -203,9 +199,6 @@ install(FILES
   "${PROJECT_BINARY_DIR}/fourierconvolutioncudalib-config-version.cmake"
   DESTINATION "${INSTALL_SHARE_DIR}" COMPONENT dev)
 
-# Install the export set for use with the install-tree 
-install(EXPORT fourierconvolutioncudalib-targets 
+# Install the export set for use with the install-tree
+install(EXPORT fourierconvolutioncudalib-targets
   DESTINATION "${INSTALL_SHARE_DIR}" COMPONENT dev)
-
-
-
