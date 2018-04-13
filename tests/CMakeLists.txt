@@ -1,6 +1,6 @@
 INCLUDE_DIRECTORIES(.)
 
-FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem
+FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem timer
   unit_test_framework REQUIRED)
 IF(Boost_FOUND)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -21,33 +21,22 @@ CUDA_ADD_EXECUTABLE(test_how_cufft_works test_how_cufft_works.cu image_stack_uti
 
 IF(Boost_FOUND)
 
-  MESSAGE(">> Boost UTF: ${Boost_LIBRARIES} ")
-  target_link_libraries(test_gpu_convolve ${Boost_LIBRARIES} ${PROJECT_NAME})
+  MESSAGE(">> Boost UTF: ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ")
+  target_link_libraries(test_gpu_convolve ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${PROJECT_NAME})
   set_target_properties(test_gpu_convolve PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
 
-  target_link_libraries(test_gpu_numerical_stability ${Boost_LIBRARIES} ${PROJECT_NAME})
+  target_link_libraries(test_gpu_numerical_stability ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${PROJECT_NAME})
   set_target_properties(test_gpu_numerical_stability PROPERTIES COMPILE_FLAGS "-DBOOST_TEST_DYN_LINK")
 
-  target_link_libraries(test_how_cufft_works ${Boost_LIBRARIES} )
+  target_link_libraries(test_how_cufft_works ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} )
   CUDA_ADD_CUFFT_TO_TARGET( test_how_cufft_works )
 
 
 ENDIF(Boost_FOUND)
 
-find_package(benchmark)
-find_package(Threads)
-
-if(benchmark_FOUND)
-  message(STATUS "found benchmark package")
-  CUDA_ADD_EXECUTABLE(bench_gpu_convolve bench_gpu_convolve.cu)
-  target_link_libraries(bench_gpu_convolve benchmark::benchmark ${PROJECT_NAME} -pthread stdc++)
-  target_include_directories(bench_gpu_convolve PRIVATE "${benchmark_DIR}/../../../include")
-  target_compile_options(bench_gpu_convolve PRIVATE -pthread)
-  CUDA_ADD_CUFFT_TO_TARGET( bench_gpu_convolve )
-
-else()
-  message(STATUS "benchmark package not found")
-endif()
+message(STATUS "found benchmark package")
+CUDA_ADD_EXECUTABLE(bench_gpu_convolve bench_gpu_convolve.cu)
+target_link_libraries(bench_gpu_convolve ${Boost_TIMER_LIBRARY} ${PROJECT_NAME})
 
 ELSE(CUDA_FOUND)
 MESSAGE(WARNING "Skipping GPU based tests, CUDA not found\!")
