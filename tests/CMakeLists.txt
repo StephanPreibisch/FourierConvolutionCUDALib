@@ -1,6 +1,6 @@
 INCLUDE_DIRECTORIES(.)
 
-FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS # system filesystem
+FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem
   unit_test_framework REQUIRED)
 IF(Boost_FOUND)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -9,6 +9,7 @@ ENDIF()
 
 FIND_PACKAGE(CUDA)
 
+
 IF(CUDA_FOUND)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
 LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src) 
@@ -16,6 +17,7 @@ LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/src)
 CUDA_ADD_EXECUTABLE(test_gpu_convolve test_gpu_convolve.cpp image_stack_utils.cpp)
 CUDA_ADD_EXECUTABLE(test_gpu_numerical_stability test_gpu_numerical_stability.cpp image_stack_utils.cpp)
 CUDA_ADD_EXECUTABLE(test_how_cufft_works test_how_cufft_works.cu image_stack_utils.cpp)
+
 
 IF(Boost_FOUND)
 
@@ -31,6 +33,21 @@ IF(Boost_FOUND)
 
 
 ENDIF(Boost_FOUND)
+
+find_package(benchmark)
+find_package(Threads)
+
+if(benchmark_FOUND)
+  message(STATUS "found benchmark package")
+  CUDA_ADD_EXECUTABLE(bench_gpu_convolve bench_gpu_convolve.cu)
+  target_link_libraries(bench_gpu_convolve benchmark::benchmark ${PROJECT_NAME} -pthread stdc++)
+  target_include_directories(bench_gpu_convolve PRIVATE "${benchmark_DIR}/../../../include")
+  target_compile_options(bench_gpu_convolve PRIVATE -pthread)
+  CUDA_ADD_CUFFT_TO_TARGET( bench_gpu_convolve )
+
+else()
+  message(STATUS "benchmark package not found")
+endif()
 
 ELSE(CUDA_FOUND)
 MESSAGE(WARNING "Skipping GPU based tests, CUDA not found\!")

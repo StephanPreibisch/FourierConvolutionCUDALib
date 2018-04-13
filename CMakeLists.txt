@@ -4,14 +4,36 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 # project name
 PROJECT(FourierConvolutionCUDALib CXX C)
 if(NOT(${CMAKE_VERSION} VERSION_LESS "3.0.0"))
-cmake_policy(SET CMP0042 NEW)
+  cmake_policy(SET CMP0042 NEW)
 endif()
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.1")
-cmake_policy(SET CMP0054 NEW)
+  cmake_policy(SET CMP0054 NEW)
 endif()
 
+set(CMAKE_CXX_STANDARD 03)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(ENABLE_TESTING "enable the test suite (requires boost to be installed" ON)
+option(ENABLE_BENCHMARKS "enable the benchmark suite (requires google/benchmark to be installed" OFF)
+# option(ENABLE_CXX11_ABI  "enable _GLIBCXX_USE_CXX11_ABI in GCC 5.0+" ON)
+# if(${WITH_CXX11_ABI})
+#   set(CXX11_ABI_VALUE 1)
+# else()
+#   set(CXX11_ABI_VALUE 0)
+# endif()
+
+
+# IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+#     set(WITH_CXX11_ABI ON)
+#     set(CXX11_ABI_VALUE 1)
+#   endif()
+
+#   add_definitions(-D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_VALUE})
+#   message(">> [${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}] adding -D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_VALUE}")
+# endif()
+
 # version number
 SET (FOURIERCONVOLUTIONCUDALIB_NAME "CUDA FOURIER CONVOLUTION LIBRARY")
 SET (FOURIERCONVOLUTIONCUDALIB_CODENAME "${PROJECT_NAME}")
@@ -75,7 +97,7 @@ IF(INCLUDE_CUDA)
     FIND_PACKAGE(CUDA)
     IF(CUDA_FOUND)
     SET(CUDA_VERBOSE_BUILD ON)
-    set(CUDA_ARCHS 10;20;30;35;37;50;52;60;61;70)
+    #set(CUDA_ARCHS 10;20;30;35;37;50;52;60;61;70)
 
     SET(CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
     IF(APPLE)
@@ -92,6 +114,7 @@ IF(INCLUDE_CUDA)
       ENDIF()
     ENDIF(APPLE)
 
+    if(NOT DEFINED SMS)
     set(CUDA_ARCHS 10;20;21)
 
     IF("${CUDA_VERSION}" VERSION_GREATER "4.5")
@@ -118,7 +141,9 @@ IF(INCLUDE_CUDA)
     IF("${CUDA_VERSION}" VERSION_GREATER "8.0")
       list(APPEND CUDA_ARCHS 70)#8.0+
     ENDIF()
-
+  else()
+    set(CUDA_ARCHS ${SMS})
+    endif()
 
     list(SORT CUDA_ARCHS)
 
@@ -133,7 +158,11 @@ IF(INCLUDE_CUDA)
 
         list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_${CUDA_HIGHEST_SM},code=compute_${CUDA_HIGHEST_SM}")
 
-    MESSAGE(">> CUDA version ${CUDA_VERSION} detected, compiling for Compute Capability/ies ${CUDA_ARCHS} (highest SM: ${CUDA_HIGHEST_SM})")
+        MESSAGE(">> CUDA version ${CUDA_VERSION} detected, compiling for Compute Capability/ies ${CUDA_ARCHS} (highest SM: ${CUDA_HIGHEST_SM})")
+
+        # if(WITH_CXX11_ABI)
+        #   list(APPEND CUDA_NVCC_FLAGS "-D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_VALUE}")
+        # endif()
 
     set(CUDA_NVCC_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE};-O2;--use_fast_math)
     set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG};-g;-G)
