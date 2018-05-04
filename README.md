@@ -58,6 +58,20 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/directory/of/your/choice -DBOOST_ROOT=/path/to/b
 
 Here, ```/path/to/boost/root``` should contain the boost libraries and the boost headers.
 
+Benchmarks
+----------
+
+The repo contains a small utility (in alpha stage) that can be used to run benchmarks. To enable building it, do:
+
+``` bash
+$ cd repo
+$ mkdir build
+$ cd build
+$ cmake -DENABLE_BENCHMARKS=ON ..
+$ make
+$ ./tests/bench_gpu_convolve 
+[gpu 0] inplace, 10x, (image 128**3, kernel 3**3) 1.326021s wall, 1.020000s user + 0.300000s system = 1.320000s CPU (99.5%)
+```
 
 How to get Help
 ===============
