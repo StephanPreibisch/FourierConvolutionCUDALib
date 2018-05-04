@@ -1,7 +1,7 @@
 INCLUDE_DIRECTORIES(.)
 
-FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem timer
-  unit_test_framework REQUIRED)
+FIND_PACKAGE (Boost 1.42 QUIET COMPONENTS system filesystem timer unit_test_framework program_options
+  REQUIRED)
 IF(Boost_FOUND)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}) 
@@ -31,12 +31,13 @@ IF(Boost_FOUND)
   target_link_libraries(test_how_cufft_works ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} )
   CUDA_ADD_CUFFT_TO_TARGET( test_how_cufft_works )
 
+  if(ENABLE_BENCHMARKS)
+  CUDA_ADD_EXECUTABLE(bench_gpu_convolve bench_gpu_convolve.cu)
+  target_link_libraries(bench_gpu_convolve ${Boost_TIMER_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${PROJECT_NAME})
+endif()
 
 ENDIF(Boost_FOUND)
 
-message(STATUS "found benchmark package")
-CUDA_ADD_EXECUTABLE(bench_gpu_convolve bench_gpu_convolve.cu)
-target_link_libraries(bench_gpu_convolve ${Boost_TIMER_LIBRARY} ${PROJECT_NAME})
 
 ELSE(CUDA_FOUND)
 MESSAGE(WARNING "Skipping GPU based tests, CUDA not found\!")
